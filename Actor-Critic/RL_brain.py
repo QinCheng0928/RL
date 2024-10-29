@@ -87,6 +87,7 @@ class ActorCritic:
         # 对每个状态对应的动作价值用log函数
         log_probs = torch.log(self.actor(states).gather(1, actions))
         # 策略梯度损失
+        # 通过detach()创建的张量不会计算梯度，也不会影响反向传播。
         actor_loss = torch.mean(-log_probs * td_delta.detach())
         # 值函数损失，预测值和目标值之间
         critic_loss = torch.mean(F.mse_loss(self.critic(states), td_target.detach()))
