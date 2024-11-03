@@ -2,10 +2,14 @@ import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-
 import highway_env  # noqa: F401
-
-
+import os
+current_directory = os.getcwd()
+print(current_directory)
+# ============================================
+#    tensorboard --logdir=intersection_ppo/
+#            http://localhost:6006/
+# ============================================
 # ==================================
 #        Main script
 # ==================================
@@ -22,8 +26,8 @@ def train():
         n_steps=batch_size * 12 // n_cpu,
         batch_size=batch_size,
         n_epochs=10,
-        learning_rate=5e-4,
-        gamma=0.8,
+        learning_rate=1e-4,
+        gamma=0.9,
         verbose=2,
         tensorboard_log="intersection_ppo/",
     )
@@ -33,10 +37,12 @@ def train():
     model.save("intersection_ppo/model")    
 
 def evaluate():
-    model = PPO.load("E:\RL\HighwayEnv-master\intersection_ppo\model")
+    model = PPO.load(current_directory + "\intersection_ppo\model")
     # env = gym.make("intersection-v0", render_mode="rgb_array")
     env = gym.make("intersection-v0", render_mode="human")
-    for i in range(50):
+    totcount = 50
+    count = 0.0
+    for i in range(totcount):
         obs, info = env.reset()
         done = truncated = False
         rewards = 0.0
@@ -46,6 +52,10 @@ def evaluate():
             rewards += reward
             env.render()
         print(str(i) + "th: reward = " + str(rewards))
+        if(rewards > 5):
+            count += 1
+    print(count)
+    print(totcount)
 
 if __name__ == "__main__":
     istrain = False
