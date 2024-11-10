@@ -40,9 +40,7 @@ def evaluate():
     model = PPO.load(current_directory + "\intersection_ppo\model")
     # env = gym.make("intersection-v0", render_mode="rgb_array")
     env = gym.make("intersection-v0", render_mode="human")
-    totcount = 50
-    count = 0.0
-    for i in range(totcount):
+    for i in range(50):
         obs, info = env.reset()
         done = truncated = False
         rewards = 0.0
@@ -51,11 +49,12 @@ def evaluate():
             obs, reward, done, truncated, info = env.step(action)
             rewards += reward
             env.render()
+            # 获取并打印受控车辆的速度和动作
+            if hasattr(env.unwrapped, "controlled_vehicles") and env.unwrapped.controlled_vehicles:
+                controlled_vehicle_speed = env.unwrapped.controlled_vehicles[0].speed
+                print("Controlled Vehicle Speed:", controlled_vehicle_speed)
+                print("Selected Action:", action)
         print(str(i) + "th: reward = " + str(rewards))
-        if(rewards > 5):
-            count += 1
-    print(count)
-    print(totcount)
 
 if __name__ == "__main__":
     istrain = False
