@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+import random
 from typing import TypeVar
 
 import gymnasium as gym
@@ -17,7 +18,6 @@ from highway_env.envs.common.graphics import EnvViewer
 from highway_env.envs.common.observation import ObservationType, observation_factory
 from highway_env.vehicle.behavior import IDMVehicle
 from highway_env.vehicle.kinematics import Vehicle
-
 
 Observation = TypeVar("Observation")
 
@@ -51,6 +51,7 @@ class AbstractEnv(gym.Env):
         # Scene
         self.road = None
         self.controlled_vehicles = []
+        self.np_random = np.random
 
         # Spaces
         self.action_type = None
@@ -101,11 +102,12 @@ class AbstractEnv(gym.Env):
             "screen_height": 150,  # [px]
             "centering_position": [0.3, 0.5],
             "scaling": 5.5,
-            "show_trajectories": False,
+            "show_trajectories": True,
             "render_agent": True,
             "offscreen_rendering": os.environ.get("OFFSCREEN_RENDERING", "0") == "1",
             "manual_control": False,
             "real_time_rendering": False,
+            "seed": 0,
         }
 
     def configure(self, config: dict) -> None:
@@ -198,7 +200,16 @@ class AbstractEnv(gym.Env):
         :param options: Allows the environment configuration to specified through `options["config"]`
         :return: the observation of the reset state
         """
+        seed_list = [0, 2000, 2024]
+        seed = random.choice(seed_list)
+        # seed = 0
+        self.seed = seed
+        np.random.seed(self.seed)
+        random.seed(self.seed)
+        # self.seed = self.config['seed']
+
         super().reset(seed=seed, options=options)
+
         if options and "config" in options:
             self.configure(options["config"])
         self.update_metadata()
@@ -211,6 +222,7 @@ class AbstractEnv(gym.Env):
         info = self._info(obs, action=self.action_space.sample())
         if self.render_mode == "human":
             self.render()
+        obs = np.reshape(obs, (1, 42)) # 用sb3的时候这里要注释掉
         return obs, info
 
     def _reset(self) -> None:
@@ -246,6 +258,8 @@ class AbstractEnv(gym.Env):
         info = self._info(obs, action)
         if self.render_mode == "human":
             self.render()
+
+        obs = np.reshape(obs, (1, 42))
 
         return obs, reward, terminated, truncated, info
 

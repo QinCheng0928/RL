@@ -21,7 +21,7 @@ class IntersectionEnv(AbstractEnv):
             {
                 "observation": {
                     "type": "Kinematics",
-                    "vehicles_count": 15,
+                    "vehicles_count": 6,
                     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                     "features_range": {
                         "x": [-100, 100],
@@ -31,7 +31,7 @@ class IntersectionEnv(AbstractEnv):
                     },
                     "absolute": True,
                     "flatten": False,
-                    "observe_intentions": False,
+                    "observe_intentions": True,
                 },
                 "action": {
                     "type": "DiscreteMetaAction",
@@ -39,7 +39,7 @@ class IntersectionEnv(AbstractEnv):
                     "lateral": False,
                     "target_speeds": [0, 4.5, 9],
                 },
-                "duration": 13,  # [s]
+                "duration": 30,  # [s]
                 "destination": "o1",
                 "controlled_vehicles": 1,
                 "initial_vehicle_count": 10,
@@ -48,11 +48,12 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -5,
-                "high_speed_reward": 1,
-                "arrived_reward": 1,
-                "reward_speed_range": [7.0, 9.0],
-                "normalize_reward": False,
+                "collision_reward": -500,
+                "high_speed_reward": 10,
+                "arrived_reward": 100, # default=20(用20训练处理单种子情况)
+                "stop_reward": -50,
+                "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
+                "normalize_reward": False, #
                 "offroad_terminal": False,
             }
         )
@@ -82,7 +83,7 @@ class IntersectionEnv(AbstractEnv):
             self.config.get(name, 0) * reward for name, reward in rewards.items()
         )
         reward = self.config["arrived_reward"] if rewards["arrived_reward"] else reward
-        reward *= rewards["on_road_reward"]
+        # reward *= rewards["on_road_reward"]
         if self.config["normalize_reward"]:
             reward = utils.lmap(
                 reward,
@@ -93,14 +94,19 @@ class IntersectionEnv(AbstractEnv):
 
     def _agent_rewards(self, action: int, vehicle: Vehicle) -> dict[str, float]:
         """Per-agent per-objective reward signal."""
+        # scaled_speed = utils.lmap(
+        #     vehicle.speed, self.config["reward_speed_range"], [0, 1]
+        # )
         scaled_speed = utils.lmap(
-            vehicle.speed, self.config["reward_speed_range"], [0, 1]
+            vehicle.speed, self.config["reward_speed_range"], [-1, 1]
         )
         return {
             "collision_reward": vehicle.crashed,
-            "high_speed_reward": np.clip(scaled_speed, 0, 1),
+            # "high_speed_reward": np.clip(scaled_speed, 0, 1),
+            "high_speed_reward": np.clip(scaled_speed, -1, 1),
             "arrived_reward": self.has_arrived(vehicle),
-            "on_road_reward": vehicle.on_road,
+            "stop_reward": vehicle.speed == 0,
+            # "on_road_reward": vehicle.on_road,
         }
 
     def _is_terminated(self) -> bool:
@@ -358,7 +364,7 @@ class IntersectionEnv(AbstractEnv):
             vehicle
             for vehicle in self.road.vehicles
             if vehicle in self.controlled_vehicles
-            or not (is_leaving(vehicle) or vehicle.route is None)
+            or not (is_leaving(vehicle) or vehicle.route is None or vehicle.crashed)
         ]
 
     def has_arrived(self, vehicle: Vehicle, exit_distance: float = 25) -> bool:
@@ -367,7 +373,6 @@ class IntersectionEnv(AbstractEnv):
             and "o" in vehicle.lane_index[1]
             and vehicle.lane.local_coordinates(vehicle.position)[0] >= exit_distance
         )
-
 
 class MultiAgentIntersectionEnv(IntersectionEnv):
     @classmethod
