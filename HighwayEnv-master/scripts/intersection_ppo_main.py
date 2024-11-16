@@ -15,21 +15,22 @@ print(current_directory)
 # ==================================
 
 def train():
-    n_cpu = 6
-    batch_size = 64
-    # env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
-    env = gym.make('intersection-v0')
+    n_cpu = 4
+    batch_size = 128
+    env = make_vec_env("intersection-v1", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
+    # env = gym.make('intersection-v0')
     model = PPO(
         "MlpPolicy",
         env,
         policy_kwargs=dict(net_arch=[dict(pi=[256, 256], vf=[256, 256])]),
-        n_steps=batch_size * 12 // n_cpu,
+        n_steps=200,
         batch_size=batch_size,
         n_epochs=10,
-        learning_rate=1e-4,
-        gamma=0.9,
+        learning_rate=5e-4,
+        gamma=0.99,
         verbose=2,
         tensorboard_log="intersection_ppo/",
+        seed=2000
     )
     # Train the agent
     model.learn(total_timesteps=int(2e4))
@@ -39,7 +40,7 @@ def train():
 def evaluate():
     model = PPO.load(current_directory + "\intersection_ppo\model")
     # env = gym.make("intersection-v0", render_mode="rgb_array")
-    env = gym.make("intersection-v0", render_mode="human")
+    env = gym.make("intersection-v1", render_mode="human")
     for i in range(50):
         obs, info = env.reset()
         done = truncated = False
