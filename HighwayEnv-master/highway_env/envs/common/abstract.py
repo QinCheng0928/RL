@@ -222,7 +222,7 @@ class AbstractEnv(gym.Env):
         info = self._info(obs, action=self.action_space.sample())
         if self.render_mode == "human":
             self.render()
-        obs = np.reshape(obs, (1, 42)) # 用sb3的时候这里要注释掉
+        # obs = np.reshape(obs, (1, 42)) # 用sb3的时候这里要注释掉
         return obs, info
 
     def _reset(self) -> None:
@@ -259,7 +259,7 @@ class AbstractEnv(gym.Env):
         if self.render_mode == "human":
             self.render()
 
-        obs = np.reshape(obs, (1, 42))
+        # obs = np.reshape(obs, (1, 42))
 
         return obs, reward, terminated, truncated, info
 

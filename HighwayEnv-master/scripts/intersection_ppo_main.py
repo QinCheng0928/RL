@@ -58,7 +58,7 @@ def evaluate():
         print(str(i) + "th: reward = " + str(rewards))
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()
