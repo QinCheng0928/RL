@@ -9,7 +9,7 @@ from numpy.linalg import LinAlgError
 from highway_env.road.lane import AbstractLane
 from highway_env.utils import Interval, Matrix, Vector
 
-
+# 计算两个区间相乘的结果，返回相乘的最大值和最小值。
 def intervals_product(a: Interval, b: Interval) -> np.ndarray:
     """
     Compute the product of two intervals

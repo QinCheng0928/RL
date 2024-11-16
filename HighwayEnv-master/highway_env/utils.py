@@ -9,6 +9,8 @@ import numpy as np
 
 
 # Useful types
+# 使用 Python 的 类型提示（type hinting） 定义的一个类型别名
+# 函数或类的参数可以兼容多种输入类型，增强了灵活性和可读性。
 Vector = Union[np.ndarray, Sequence[float]]
 Matrix = Union[np.ndarray, Sequence[Sequence[float]]]
 Interval = Union[
@@ -30,11 +32,11 @@ def lmap(v: float, x: Interval, y: Interval) -> float:
     """Linear map of value v with range x to desired range y."""
     return y[0] + (v - x[0]) * (y[1] - y[0]) / (x[1] - x[0])
 
-
+# 用来生成 Python 类或可调用对象的完全限定路径
 def get_class_path(cls: Callable) -> str:
     return cls.__module__ + "." + cls.__qualname__
 
-
+# 用于通过一个类或可调用对象的完全限定路径来动态加载并返回对应的类或函数对象。
 def class_from_path(path: str) -> Callable:
     module_name, class_name = path.rsplit(".", 1)
     class_object = getattr(importlib.import_module(module_name), class_name)
@@ -53,11 +55,12 @@ def not_zero(x: float, eps: float = 1e-2) -> float:
     else:
         return -eps
 
-
+# 将输入角度x规范化到-𝜋到𝜋的范围
 def wrap_to_pi(x: float) -> float:
     return ((x + np.pi) % (2 * np.pi)) - np.pi
 
 
+# 判断给定的二维点 point 是否位于指定的矩形区域内。
 def point_in_rectangle(point: Vector, rect_min: Vector, rect_max: Vector) -> bool:
     """
     Check if a point is inside a rectangle
@@ -109,7 +112,7 @@ def point_in_ellipse(
     ru = r.dot(point - center)
     return np.sum(np.square(ru / np.array([length, width]))) < 1
 
-
+# 如果矩形 A 完全包含矩形 B 的中心和所有点，则检测矩形 A 的点是否在矩形 B 内会返回 False，但矩形实际上是相交的。
 def rotated_rectangles_intersect(
     rect1: tuple[Vector, float, float, float], rect2: tuple[Vector, float, float, float]
 ) -> bool:
@@ -122,7 +125,7 @@ def rotated_rectangles_intersect(
     """
     return has_corner_inside(rect1, rect2) or has_corner_inside(rect2, rect1)
 
-
+# 返回矩形角点
 def rect_corners(
     center: np.ndarray,
     length: float,
@@ -154,7 +157,7 @@ def rect_corners(
     rotation = np.array([[c, -s], [s, c]])
     return (rotation @ np.array(corners).T).T + np.tile(center, (len(corners), 1))
 
-
+# 判断 矩形 1 (rect1) 的任意一个点是否在 矩形 2 (rect2) 的范围内
 def has_corner_inside(
     rect1: tuple[Vector, float, float, float], rect2: tuple[Vector, float, float, float]
 ) -> bool:
@@ -171,7 +174,7 @@ def has_corner_inside(
         ]
     )
 
-
+# 将一个多边形 polygon 投影到指定的轴 axis 上，返回该投影的范围（最小值和最大值）。
 def project_polygon(polygon: Vector, axis: Vector) -> tuple[float, float]:
     min_p, max_p = None, None
     for p in polygon:
@@ -182,7 +185,7 @@ def project_polygon(polygon: Vector, axis: Vector) -> tuple[float, float]:
             max_p = projected
     return min_p, max_p
 
-
+# 判断区间是否有重叠，有<0,无>0
 def interval_distance(min_a: float, max_a: float, min_b: float, max_b: float):
     """
     Calculate the distance between [minA, maxA] and [minB, maxB]
@@ -190,7 +193,7 @@ def interval_distance(min_a: float, max_a: float, min_b: float, max_b: float):
     """
     return min_b - max_a if min_a < min_b else min_a - max_b
 
-
+# 检测两个多边形是否相交
 def are_polygons_intersecting(
     a: Vector, b: Vector, displacement_a: Vector, displacement_b: Vector
 ) -> tuple[bool, bool, np.ndarray | None]:
@@ -269,7 +272,7 @@ def confidence_ellipsoid(
     )
     return theta_n_lambda, g_n_lambda, beta_n
 
-
+# ？
 def confidence_polytope(
     data: dict, parameter_box: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
@@ -300,7 +303,7 @@ def confidence_polytope(
         )
     return theta_n_lambda, d_theta, g_n_lambda, beta_n
 
-
+# 表示这个新的观测是否有效（即它是否在置信椭球体内）。
 def is_valid_observation(
     y: np.ndarray,
     phi: np.ndarray,
@@ -327,7 +330,7 @@ def is_valid_observation(
     error_bound = np.sqrt(np.amax(eig_phi) / np.amin(eig_g)) * beta + sigma
     return error < error_bound
 
-
+# 检查最后一条观测是否位于前 N-1 条数据的置信椭球体内
 def is_consistent_dataset(data: dict, parameter_box: np.ndarray = None) -> bool:
     """
     Check whether a dataset {phi_n, y_n} is consistent
@@ -349,7 +352,7 @@ def is_consistent_dataset(data: dict, parameter_box: np.ndarray = None) -> bool:
     else:
         return True
 
-
+# ？
 def near_split(x, num_bins=None, size_bins=None):
     """
     Split a number into several bins with near-even distribution.
@@ -367,7 +370,7 @@ def near_split(x, num_bins=None, size_bins=None):
     elif size_bins:
         return near_split(x, num_bins=int(np.ceil(x / size_bins)))
 
-
+# 给定点到一个圆（在二维空间中的圆）的距离
 def distance_to_circle(center, radius, direction):
     scaling = radius * np.ones((2, 1))
     a = np.linalg.norm(direction / scaling) ** 2
@@ -382,7 +385,8 @@ def distance_to_circle(center, radius, direction):
         distance = np.infty
     return distance
 
-
+# 计算了一条线段和一个矩形之间的交点距离
+# 返回交点与线段 RQ 的起点 R 之间的距离
 def distance_to_rect(line: tuple[np.ndarray, np.ndarray], rect: list[np.ndarray]):
     """
     Compute the intersection between a line segment and a rectangle.
@@ -412,7 +416,7 @@ def distance_to_rect(line: tuple[np.ndarray, np.ndarray], rect: list[np.ndarray]
     else:
         return np.inf
 
-
+# 求解一元二次方程
 def solve_trinom(a, b, c):
     delta = b**2 - 4 * a * c
     if delta >= 0:

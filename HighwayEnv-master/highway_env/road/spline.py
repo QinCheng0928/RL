@@ -18,10 +18,15 @@ class LinearSpline2D:
         x_values_diff = np.hstack((x_values_diff, x_values_diff[-1]))
         y_values_diff = np.diff(y_values)
         y_values_diff = np.hstack((y_values_diff, y_values_diff[-1]))
+        # arr = np.array([1, 2, 3, 4])
+        # result = np.cumsum(arr)
+        # print(result)  # 输出: [ 1  3  6 10 ]
         arc_length_cumulated = np.hstack(
             (0, np.cumsum(np.sqrt(x_values_diff[:-1] ** 2 + y_values_diff[:-1] ** 2)))
         )
+        # 直线拟合曲线获得的长度 self.length
         self.length = arc_length_cumulated[-1]
+        # SciPy 库中的插值函数，
         self.x_curve = interpolate.interp1d(
             arc_length_cumulated, x_values, fill_value="extrapolate"
         )
@@ -39,12 +44,14 @@ class LinearSpline2D:
             self.x_curve, self.y_curve, self.length, self.PARAM_CURVE_SAMPLE_DISTANCE
         )
 
+    # __call__ 方法使得 LinearSpline2D 的实例可以像函数一样被调用
     def __call__(self, lon: float) -> tuple[float, float]:
         return self.x_curve(lon), self.y_curve(lon)
 
     def get_dx_dy(self, lon: float) -> tuple[float, float]:
         idx_pose = self._get_idx_segment_for_lon(lon)
         pose = self.poses[idx_pose]
+        # 沿曲线的法线方向
         return pose.normal
 
     def cartesian_to_frenet(self, position: tuple[float, float]) -> tuple[float, float]:
@@ -89,6 +96,9 @@ class LinearSpline2D:
         """
         Returns the index of the curve pose that corresponds to the longitudinal coordinate
         """
+        # lon < self.s_samples 生成一个布尔数组，例如：[True, True, False, False, True]，
+        # 它表示 lon 是否小于 self.s_samples 中的每个元素。
+        # np.argwhere(lon < self.s_samples) 返回的是一个包含所有 True 元素索引的位置数组。
         idx_smaller = np.argwhere(lon < self.s_samples)
         if len(idx_smaller) == 0:
             return len(self.s_samples) - 1

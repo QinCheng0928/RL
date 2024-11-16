@@ -2,8 +2,13 @@ import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-import highway_env  # noqa: F401
+import sys
 import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+import highway_env
+
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
@@ -17,7 +22,7 @@ print(current_directory)
 def train():
     n_cpu = 4
     batch_size = 128
-    env = make_vec_env("intersection-v1", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
+    env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
     # env = gym.make('intersection-v0')
     model = PPO(
         "MlpPolicy",
@@ -33,14 +38,14 @@ def train():
         seed=2000
     )
     # Train the agent
-    model.learn(total_timesteps=int(2e4))
+    model.learn(total_timesteps=int(7e4))
     # Save the agent
     model.save("intersection_ppo/model")    
 
 def evaluate():
     model = PPO.load(current_directory + "\intersection_ppo\model")
     # env = gym.make("intersection-v0", render_mode="rgb_array")
-    env = gym.make("intersection-v1", render_mode="human")
+    env = gym.make("intersection-v0", render_mode="human")
     for i in range(50):
         obs, info = env.reset()
         done = truncated = False
@@ -58,10 +63,11 @@ def evaluate():
         print(str(i) + "th: reward = " + str(rewards))
 
 if __name__ == "__main__":
-    istrain = True
+    istrain = False
     if istrain:
         print("Training...")
         train()
     else:
         print("evaluating...")
         evaluate()
+
