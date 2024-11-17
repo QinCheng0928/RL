@@ -19,6 +19,7 @@ Route = List[LaneIndex]
 
 
 class RoadNetwork:
+    # dict是c++中的map
     graph: dict[str, dict[str, list[AbstractLane]]]
 
     def __init__(self):
@@ -367,6 +368,7 @@ class RoadNetwork:
         _id = np_random.integers(len(self.graph[_from][_to]))
         return _from, _to, _id
 
+    # 根据提供的配置字典（config）初始化一个 RoadNetwork 对象
     @classmethod
     def from_config(cls, config: dict) -> None:
         net = cls()
@@ -377,7 +379,7 @@ class RoadNetwork:
                 for lane_dict in lanes_dict:
                     net.graph[_from][_to].append(lane_from_config(lane_dict))
         return net
-
+    # 将当前的 RoadNetwork 对象转换为配置字典的形式。
     def to_config(self) -> dict:
         graph_dict = {}
         for _from, to_dict in self.graph.items():
