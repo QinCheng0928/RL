@@ -161,13 +161,13 @@ class StraightLane(AbstractLane):
 
     def __init__(
         self,
-        start: Vector,
+        start: Vector,                                 # 车道起点和终点，二维向量
         end: Vector,
         width: float = AbstractLane.DEFAULT_WIDTH,
-        line_types: tuple[LineType, LineType] = None,
-        forbidden: bool = False,
-        speed_limit: float = 20,
-        priority: int = 0,
+        line_types: tuple[LineType, LineType] = None,  # 车道左右两边的线类型
+        forbidden: bool = False,                       # 车道是否禁止切换
+        speed_limit: float = 20,                       # 车道速度限制
+        priority: int = 0,                             # 车道优先级
     ) -> None:
         """
         New straight lane.
@@ -182,13 +182,13 @@ class StraightLane(AbstractLane):
         self.start = np.array(start)
         self.end = np.array(end)
         self.width = width
-        self.heading = np.arctan2(
+        self.heading = np.arctan2(                                                 # 车道方向对于 X 轴的夹角
             self.end[1] - self.start[1], self.end[0] - self.start[0]
         )
         self.length = np.linalg.norm(self.end - self.start)
         self.line_types = line_types or [LineType.STRIPED, LineType.STRIPED]
-        self.direction = (self.end - self.start) / self.length
-        self.direction_lateral = np.array([-self.direction[1], self.direction[0]])
+        self.direction = (self.end - self.start) / self.length                     # 车道方向单位向量
+        self.direction_lateral = np.array([-self.direction[1], self.direction[0]]) # 垂直于车道方向的单位向量
         self.forbidden = forbidden
         self.priority = priority
         self.speed_limit = speed_limit
@@ -212,6 +212,7 @@ class StraightLane(AbstractLane):
         lateral = np.dot(delta, self.direction_lateral)
         return float(longitudinal), float(lateral)
 
+    # 使用解包运算符 **，将config字典中的键值对传递给类的构造函数（__init__ 方法）
     @classmethod
     def from_config(cls, config: dict):
         config["start"] = np.array(config["start"])
@@ -240,9 +241,9 @@ class SineLane(StraightLane):
         self,
         start: Vector,
         end: Vector,
-        amplitude: float,
-        pulsation: float,
-        phase: float,
+        amplitude: float,                           # 描述车道的振幅，可能用于表示车道的曲线变化幅度。
+        pulsation: float,                           # 表示车道波动的频率，或几何曲线的变化速率。
+        phase: float,                               # 表示车道波形的相位偏移，用于调整波动的起始位置。
         width: float = StraightLane.DEFAULT_WIDTH,
         line_types: list[LineType] = None,
         forbidden: bool = False,
