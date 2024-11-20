@@ -35,8 +35,11 @@ def train():
         gamma=0.99,
         verbose=2,
         tensorboard_log="intersection_ppo/",
-        seed=2000
+        seed=2000,
+        device='cuda'  # 指定使用 GPU
     )
+    # 检查使用的设备
+    print("Device used:", model.policy.device)
     # Train the agent
     model.learn(total_timesteps=int(7e4))
     # Save the agent
