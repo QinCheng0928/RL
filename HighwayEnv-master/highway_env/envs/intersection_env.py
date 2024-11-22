@@ -267,6 +267,7 @@ class IntersectionEnv(AbstractEnv):
         vehicle_type.COMFORT_ACC_MIN = -3
 
         # Random vehicles
+        # 随机车辆：在环境中模拟普通交通流量的车辆
         simulation_steps = 3
         for t in range(n_vehicles - 1):
             self._spawn_vehicle(np.linspace(0, 80, n_vehicles)[t])
@@ -280,6 +281,7 @@ class IntersectionEnv(AbstractEnv):
             ]
 
         # Challenger vehicle
+        # 挑战车辆：一个特殊车辆，用于增加环境中的挑战性
         self._spawn_vehicle(
             60,
             spawn_probability=1,
@@ -289,6 +291,7 @@ class IntersectionEnv(AbstractEnv):
         )
 
         # Controlled vehicles
+        # 受控车辆：智能体
         self.controlled_vehicles = []
         for ego_id in range(0, self.config["controlled_vehicles"]):
             ego_lane = self.road.network.get_lane(
