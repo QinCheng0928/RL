@@ -34,7 +34,7 @@ def train():
         learning_rate=5e-4,
         gamma=0.99,
         verbose=2,
-        tensorboard_log="intersection_ppo/",
+        tensorboard_log="intersection_ppo_random/",
         seed=2000,
         device='cuda'  # 指定使用 GPU
     )
@@ -43,10 +43,10 @@ def train():
     # Train the agent
     model.learn(total_timesteps=int(7e4))
     # Save the agent
-    model.save("intersection_ppo/model")    
+    model.save("intersection_ppo_random/model")    
 
 def evaluate():
-    model = PPO.load(current_directory + "\intersection_ppo\model")
+    model = PPO.load(current_directory + "\intersection_ppo_random\model")
     # env = gym.make("intersection-v0", render_mode="rgb_array")
     env = gym.make("intersection-v0", render_mode="human")
     for i in range(50):

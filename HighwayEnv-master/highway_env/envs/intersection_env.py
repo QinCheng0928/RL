@@ -8,7 +8,7 @@ from highway_env.road.lane import AbstractLane, CircularLane, LineType, Straight
 from highway_env.road.regulation import RegulatedRoad
 from highway_env.road.road import RoadNetwork
 from highway_env.vehicle.kinematics import Vehicle
-
+from numpy.random import default_rng
 
 class IntersectionEnv(AbstractEnv):
     ACTIONS: dict[int, str] = {0: "SLOWER", 1: "IDLE", 2: "FASTER"}
@@ -290,41 +290,92 @@ class IntersectionEnv(AbstractEnv):
             speed_deviation=0,
         )
 
-        # Controlled vehicles
-        # 受控车辆：智能体
+        # # Controlled vehicles
+        # # 受控车辆：智能体
+        # self.controlled_vehicles = []
+        # for ego_id in range(0, self.config["controlled_vehicles"]):
+        #     ego_lane = self.road.network.get_lane(
+        #         (f"o{ego_id % 4}", f"ir{ego_id % 4}", 0)
+        #     )
+        #     destination = self.config["destination"] or "o" + str(
+        #         self.np_random.integers(1, 4)
+        #     )
+        #     ego_vehicle = self.action_type.vehicle_class(
+        #         self.road,
+        #         ego_lane.position(60 + 5 * self.np_random.normal(1), 0),
+        #         speed=ego_lane.speed_limit,
+        #         heading=ego_lane.heading_at(60),
+        #     )
+        #     try:
+        #         ego_vehicle.plan_route_to(destination)
+        #         ego_vehicle.speed_index = ego_vehicle.speed_to_index(
+        #             ego_lane.speed_limit
+        #         )
+        #         ego_vehicle.target_speed = ego_vehicle.index_to_speed(
+        #             ego_vehicle.speed_index
+        #         )
+        #     except AttributeError:
+        #         pass
+
+        #     self.road.vehicles.append(ego_vehicle)
+        #     self.controlled_vehicles.append(ego_vehicle)
+        #     for v in self.road.vehicles:  # Prevent early collisions
+        #         if (
+        #             v is not ego_vehicle
+        #             and np.linalg.norm(v.position - ego_vehicle.position) < 20
+        #         ):
+        #             self.road.vehicles.remove(v)
+
+        # Controlled vehicles: Intelligent agents
         self.controlled_vehicles = []
-        for ego_id in range(0, self.config["controlled_vehicles"]):
-            ego_lane = self.road.network.get_lane(
-                (f"o{ego_id % 4}", f"ir{ego_id % 4}", 0)
-            )
-            destination = self.config["destination"] or "o" + str(
-                self.np_random.integers(1, 4)
-            )
+
+        # 局部随机生成器，设置独立种子
+        rng = default_rng()  # 不依赖全局种子
+        local_rng = np.random.default_rng(rng)
+        # print(f"Fixed Local Seed: {local_rng}")
+        
+        for ego_id in range(self.config["controlled_vehicles"]):
+            # 随机选择起点和终点，确保起点 != 终点
+            origin_index = local_rng.integers(0, 4)  # 随机起点索引，4 表示十字路口有4条道路
+            destination_index = origin_index
+            while destination_index == origin_index:
+                destination_index = local_rng.integers(0, 4)
+
+            # 获取起点和目标终点
+            ego_lane = self.road.network.get_lane((f"o{origin_index}", f"ir{origin_index}", 0))
+            destination = f"o{destination_index}"
+
+            # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position(60 + 5 * self.np_random.normal(1), 0),
+                ego_lane.position(60 + 5 * local_rng.normal(1), 0),  # 使用局部随机数
                 speed=ego_lane.speed_limit,
                 heading=ego_lane.heading_at(60),
             )
             try:
+                # 规划路径到随机终点
                 ego_vehicle.plan_route_to(destination)
-                ego_vehicle.speed_index = ego_vehicle.speed_to_index(
-                    ego_lane.speed_limit
-                )
-                ego_vehicle.target_speed = ego_vehicle.index_to_speed(
-                    ego_vehicle.speed_index
-                )
+                ego_vehicle.speed_index = ego_vehicle.speed_to_index(ego_lane.speed_limit)
+                ego_vehicle.target_speed = ego_vehicle.index_to_speed(ego_vehicle.speed_index)
+                # 打印每辆车的起点和终点
+                # print(f"Vehicle {ego_id}: Origin -> o{origin_index}, Destination -> o{destination_index}")
             except AttributeError:
                 pass
 
+            # 将车辆加入道路环境
             self.road.vehicles.append(ego_vehicle)
             self.controlled_vehicles.append(ego_vehicle)
-            for v in self.road.vehicles:  # Prevent early collisions
+
+            # 避免早期碰撞，移除可能产生冲突的车辆
+            for v in self.road.vehicles:
                 if (
                     v is not ego_vehicle
                     and np.linalg.norm(v.position - ego_vehicle.position) < 20
                 ):
                     self.road.vehicles.remove(v)
+
+
+
 
     def _spawn_vehicle(
         self,
