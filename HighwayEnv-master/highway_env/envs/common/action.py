@@ -204,9 +204,11 @@ class DiscreteMetaAction(ActionType):
     ACTIONS_ALL = {0: "LANE_LEFT", 1: "IDLE", 2: "LANE_RIGHT", 3: "FASTER", 4: "SLOWER"}
     """A mapping of action indexes to labels."""
 
+    # 纵向动作
     ACTIONS_LONGI = {0: "SLOWER", 1: "IDLE", 2: "FASTER"}
     """A mapping of longitudinal action indexes to labels."""
 
+    # 横向动作
     ACTIONS_LAT = {0: "LANE_LEFT", 1: "IDLE", 2: "LANE_RIGHT"}
     """A mapping of lateral action indexes to labels."""
 
