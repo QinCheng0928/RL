@@ -80,7 +80,7 @@ def evaluate():
     print(f"撞车比例: {negative_ratio:.2f}")
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()

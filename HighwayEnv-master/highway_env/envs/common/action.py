@@ -212,6 +212,11 @@ class DiscreteMetaAction(ActionType):
     ACTIONS_LAT = {0: "LANE_LEFT", 1: "IDLE", 2: "LANE_RIGHT"}
     """A mapping of lateral action indexes to labels."""
 
+    # level-k需要的智能体k值的组合，先固定4个车
+    # 对应环境配置部分智能体的数量改为4个车
+    ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
+
+
     def __init__(
         self,
         env: AbstractEnv,
@@ -242,15 +247,22 @@ class DiscreteMetaAction(ActionType):
             else (
                 self.ACTIONS_LONGI
                 if longitudinal
-                else self.ACTIONS_LAT if lateral else None
+                else self.ACTIONS_LAT if lateral else self.ACTIONS_K
             )
         )
         if self.actions is None:
             raise ValueError(
                 "At least longitudinal or lateral actions must be included"
             )
-        self.actions_indexes = {v: k for k, v in self.actions.items()}
+            
+        self.actions_indexes = {v: k for k, v in self.ACTIONS_LONGI.items()}
 
+
+    def k_action(self, action: int) -> None:
+        k = self.actions[int(action)]
+        
+        return ["FASTER", "FASTER", "FASTER", "FASTER"]
+    
     def space(self) -> spaces.Space:
         return spaces.Discrete(len(self.actions))
 
@@ -259,7 +271,10 @@ class DiscreteMetaAction(ActionType):
         return functools.partial(MDPVehicle, target_speeds=self.target_speeds)
 
     def act(self, action: int | np.ndarray) -> None:
-        self.controlled_vehicle.act(self.actions[int(action)])
+        # self.controlled_vehicle.act(self.actions[int(action)])
+        # 执行多个车辆的动作
+        for i in range(len(self.env.controlled_vehicles)):
+            self.env.controlled_vehicles[i].act(self.k_action(int(action))[i])
 
     def get_available_actions(self) -> list[int]:
         """

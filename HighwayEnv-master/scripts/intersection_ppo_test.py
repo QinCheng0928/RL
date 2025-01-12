@@ -2,6 +2,7 @@ import gymnasium as gym
 import sys
 import os
 from stable_baselines3 import PPO
+import itertools
 
 # 确保项目路径正确
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -108,4 +109,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    print({i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))})

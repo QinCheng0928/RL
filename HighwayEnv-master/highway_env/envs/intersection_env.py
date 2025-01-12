@@ -24,10 +24,10 @@ class IntersectionEnv(AbstractEnv):
                     "vehicles_count": 6,
                     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                     "features_range": {
-                        "x": [-100, 100],
-                        "y": [-100, 100],
-                        "vx": [-20, 20],
-                        "vy": [-20, 20],
+                        "x": [-1000, 1000],
+                        "y": [-1000, 1000],
+                        "vx": [-200, 200],
+                        "vy": [-200, 200],
                     },
                     "absolute": True,
                     "flatten": False,
@@ -35,13 +35,13 @@ class IntersectionEnv(AbstractEnv):
                 },
                 "action": {
                     "type": "DiscreteMetaAction",
-                    "longitudinal": True,
+                    "longitudinal": False,
                     "lateral": False,
                     "target_speeds": [0, 4.5, 9],
                 },
                 "duration": 30,  # [s]
                 "destination": "o1",
-                "controlled_vehicles": 1,
+                "controlled_vehicles": 4, # 智能体的数量
                 "initial_vehicle_count": 10,
                 "spawn_probability": 0.6,
                 "screen_width": 600,
@@ -141,6 +141,8 @@ class IntersectionEnv(AbstractEnv):
         self._make_vehicles(self.config["initial_vehicle_count"])
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
+        # 这里action是k的组合
+        # 需要在下面添加k到动作的转化
         obs, reward, terminated, truncated, info = super().step(action)
         self._clear_vehicles()
         self._spawn_vehicle(spawn_probability=self.config["spawn_probability"])

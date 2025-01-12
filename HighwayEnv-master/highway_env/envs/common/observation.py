@@ -772,6 +772,7 @@ def observation_factory(env: AbstractEnv, config: dict) -> ObservationType:
     if config["type"] == "TimeToCollision":
         return TimeToCollisionObservation(env, **config)
     elif config["type"] == "Kinematics":
+        # 相当于传递type="Kinematics"给KinematicObservation
         return KinematicObservation(env, **config)
     elif config["type"] == "OccupancyGrid":
         return OccupancyGridObservation(env, **config)
