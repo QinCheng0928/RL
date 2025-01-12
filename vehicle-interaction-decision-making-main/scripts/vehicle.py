@@ -105,7 +105,7 @@ class Vehicle(VehicleBase):
 
         return act, excepted_traj
 
-    # 可视化，可以不理会
+    
     def draw_vehicle(self, draw_style = 'realistic', fill_mode = False) -> None:
         if draw_style == 'realistic':
             transform_data = Affine2D().rotate_deg_around(

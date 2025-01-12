@@ -109,6 +109,7 @@ class IntersectionEnv(AbstractEnv):
             # "on_road_reward": vehicle.on_road,
         }
 
+    # 判断当前情景是否结束
     def _is_terminated(self) -> bool:
         return (
             any(vehicle.crashed for vehicle in self.controlled_vehicles)
@@ -120,6 +121,7 @@ class IntersectionEnv(AbstractEnv):
         """The episode is over when a collision occurs or when the access ramp has been passed."""
         return vehicle.crashed or self.has_arrived(vehicle)
 
+    # 判断任务是否因为超时而被截断
     def _is_truncated(self) -> bool:
         """The episode is truncated if the time limit is reached."""
         return self.time >= self.config["duration"]
@@ -290,43 +292,6 @@ class IntersectionEnv(AbstractEnv):
             speed_deviation=0,
         )
 
-        # # Controlled vehicles
-        # # 受控车辆：智能体
-        # self.controlled_vehicles = []
-        # for ego_id in range(0, self.config["controlled_vehicles"]):
-        #     ego_lane = self.road.network.get_lane(
-        #         (f"o{ego_id % 4}", f"ir{ego_id % 4}", 0)
-        #     )
-        #     destination = self.config["destination"] or "o" + str(
-        #         self.np_random.integers(1, 4)
-        #     )
-        #     ego_vehicle = self.action_type.vehicle_class(
-        #         self.road,
-        #         ego_lane.position(60 + 5 * self.np_random.normal(1), 0),
-        #         speed=ego_lane.speed_limit,
-        #         heading=ego_lane.heading_at(60),
-        #     )
-        #     try:
-        #         ego_vehicle.plan_route_to(destination)
-        #         ego_vehicle.speed_index = ego_vehicle.speed_to_index(
-        #             ego_lane.speed_limit
-        #         )
-        #         ego_vehicle.target_speed = ego_vehicle.index_to_speed(
-        #             ego_vehicle.speed_index
-        #         )
-        #     except AttributeError:
-        #         pass
-
-        #     self.road.vehicles.append(ego_vehicle)
-        #     self.controlled_vehicles.append(ego_vehicle)
-        #     for v in self.road.vehicles:  # Prevent early collisions
-        #         if (
-        #             v is not ego_vehicle
-        #             and np.linalg.norm(v.position - ego_vehicle.position) < 20
-        #         ):
-        #             self.road.vehicles.remove(v)
-
-        # Controlled vehicles: Intelligent agents
         self.controlled_vehicles = []
 
         # 局部随机生成器，设置独立种子
@@ -376,7 +341,7 @@ class IntersectionEnv(AbstractEnv):
 
 
 
-
+    # 生成一个新车辆并将其加入到路上的车辆列表中
     def _spawn_vehicle(
         self,
         longitudinal: float = 0,
@@ -407,6 +372,7 @@ class IntersectionEnv(AbstractEnv):
         self.road.vehicles.append(vehicle)
         return vehicle
 
+    # 移除不符合要求的车辆
     def _clear_vehicles(self) -> None:
         is_leaving = (
             lambda vehicle: "il" in vehicle.lane_index[0]

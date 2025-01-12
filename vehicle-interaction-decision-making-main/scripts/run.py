@@ -16,23 +16,45 @@ from typing import List
 from concurrent.futures import ProcessPoolExecutor, Future
 
 import matplotlib.pyplot as plt
+import gym
+import torch
+from ppo.ppo_agent import PPOAgent
 
-from utils import Node, kinematic_propagate
+from utils import Node, ActionList, State, kinematic_propagate
 from env import EnvCrossroads
 from vehicle_base import VehicleBase
 from vehicle import Vehicle, VehicleList
 from planner import MonteCarloTreeSearch
-
+import itertools
 
 LOG_LEVEL_DICT = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WARNING,
                   "error": logging.ERROR, "critical": logging.CRITICAL}
 
+# Actor输出值与n个车k值的对应关系
+# 返回Actor索引对应车辆的k值
+def get_kvalue(num_agents, num_kvalue, maximum_probability_index, vehicle_index):
+    permutations = itertools.product(range(num_kvalue), repeat=num_agents)
+    # itertools.product 会生成长度为 num_agents 的所有组合，每个元素从 0 到 num_kvalue-1 中选取。
+
+    return permutations[maximum_probability_index][vehicle_index]
+
+
+# Critic输出值与n个车动作的对应关系
+# 返回Critic索引对应车辆的动作
+def get_action(num_agents, maximum_value_index, vehicle_index):
+    permutations = itertools.product(range(6), repeat=num_agents)
+    
+    return ActionList[permutations[maximum_value_index][vehicle_index]]
+
+
 
 def run(rounds_num:int, config_path:str, save_path:str, no_animation:bool, save_fig:bool) -> None:
+    # 读取配置文件并加载到 config 字典中
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
         logging.info(f"Config parameters:\n{config}")
 
+    # 初始化环境和车辆
     logging.info(f"rounds_num: {rounds_num}")
     map_size = config["map_size"]
     lane_width = config["lane_width"]
@@ -40,11 +62,14 @@ def run(rounds_num:int, config_path:str, save_path:str, no_animation:bool, save_
     delta_t = config['delta_t']
     max_simulation_time = config['max_simulation_time']
     vehicle_draw_style = config['vehicle_display_style']
-
+    max_episodes = config["max_episodes"]
+    max_timesteps = config["max_timesteps"]
+    update_timestep = config["update_timestep"]
+    print_freq = config["print_freq"]
+    
     # initialize
     VehicleBase.initialize(env, 5, 2, 8, 2.4)
     MonteCarloTreeSearch.initialize(config)
-    # 回调函数，可以计算节点的value
     Node.initialize(config['max_step'], MonteCarloTreeSearch.calc_cur_value)
     
     vehicles = VehicleList()
@@ -52,90 +77,19 @@ def run(rounds_num:int, config_path:str, save_path:str, no_animation:bool, save_
         vehicle = Vehicle(vehicle_name, config)
         vehicles.append(vehicle)
 
-    succeed_count = 0
-    executor = ProcessPoolExecutor(max_workers = 6)
-    for iter in range(rounds_num):
-        vehicles.reset()
+    # PPO 相关初始化
+    state = State()
+    state_dim = state.get_num_attributes()      # 状态维度为状态列表的属性个数
+    action_dim = len(ActionList)                # 动作维度为动作列表的长度
+    num_agents = len(vehicles)                  # 智能体车辆的数量
+    num_kvalue = 4                              # k 取值的个数
+    print(f"num_agents: {num_agents}")
+    ppo_agent = PPOAgent(state_dim, action_dim, num_agents, lr=0.002, gamma=0.99, K_epochs=4, eps_clip=0.2)
 
-        logging.info(f"\n================== Round {iter} ==================")
-        for vehicle in vehicles:
-            logging.info(f"{vehicle.name} >>> init_x: {vehicle.state.x:.2f}, "
-                         f"init_y: {vehicle.state.y:.2f}, init_v: {vehicle.state.v:.2f}")
+    
 
-        timestamp = 0.0
-        round_start_time = time.time()
-        while True:
-            if vehicles.is_all_get_target:
-                round_elapsed_time = time.time() - round_start_time
-                logging.info(f"Round {iter} successed, "
-                             f"simulation time: {timestamp} s"
-                             f", actual timecost: {round_elapsed_time:.3f} s")
-                succeed_count += 1
-                break
 
-            if vehicles.is_any_collision or timestamp > max_simulation_time:
-                round_elapsed_time = time.time() - round_start_time
-                logging.info(f"Round {iter} failed, "
-                             f"simulation time: {timestamp} s"
-                             f", actual timecost: {round_elapsed_time:.3f} s")
-                break
-
-            future_list: List[Future] = []
-            start_time = time.time()
-
-            for vehicle in vehicles:
-                future = executor.submit(vehicle.excute, vehicles.exclude(vehicle))
-                future_list.append(future)
-
-            for vehicle, future in zip(vehicles, future_list):
-                vehicle.cur_action, vehicle.excepted_traj = future.result()
-                if not vehicle.is_get_target:
-                    vehicle.state = \
-                        kinematic_propagate(vehicle.state, vehicle.cur_action.value, delta_t)
-                    vehicle.footprint.append(vehicle.state)
-
-            elapsed_time = time.time() - start_time
-            logging.debug(f"simulation time {timestamp:.3f} step cost {elapsed_time:.6f} second")
-
-            if not no_animation:
-                plt.cla()
-                env.draw_env()
-                for vehicle in vehicles:
-                    excepted_traj = vehicle.excepted_traj.to_list()
-                    vehicle.draw_vehicle(vehicle_draw_style)
-                    plt.plot(vehicle.target.x, vehicle.target.y, marker='x', color=vehicle.color)
-                    plt.plot(excepted_traj[0], excepted_traj[1], color=vehicle.color, linewidth=1)
-                    plt.text(vehicle.vis_text_pos.x, vehicle.vis_text_pos.y + 3, f"level {vehicle.level}", color=vehicle.color)
-                    plt.text(vehicle.vis_text_pos.x, vehicle.vis_text_pos.y,
-                             f"v = {vehicle.state.v:.2f} m/s", color=vehicle.color)
-                    action_text = "GOAL !" if vehicle.is_get_target else vehicle.cur_action.name
-                    plt.text(vehicle.vis_text_pos.x, vehicle.vis_text_pos.y - 3, action_text, color=vehicle.color)
-                plt.xlim(-map_size, map_size)
-                plt.ylim(-map_size, map_size)
-                plt.title(f"Round {iter + 1} / {rounds_num}")
-                plt.gca().set_aspect('equal')
-                plt.pause(0.01)
-            timestamp += delta_t
-
-        plt.cla()
-        env.draw_env()
-        for vehicle in vehicles:
-            for state in vehicle.footprint:
-                vehicle.state = state
-                vehicle.draw_vehicle(vehicle_draw_style, True)
-            plt.text(vehicle.vis_text_pos.x, vehicle.vis_text_pos.y + 3,
-                     f"level {vehicle.level}", color=vehicle.color)
-        plt.xlim(-map_size, map_size)
-        plt.ylim(-map_size, map_size)
-        plt.title(f"Round {iter + 1} / {rounds_num}")
-        plt.gca().set_aspect('equal')
-        plt.pause(1)
-        if save_fig:
-            plt.savefig(os.path.join(save_path, f"round_{iter}.svg"), format='svg', dpi=600)
-
-    logging.info("\n=========================================")
-    logging.info(f"Experiment success {succeed_count}/{rounds_num}"
-                 f"({100*succeed_count/rounds_num:.2f}%) rounds.")
+   
 
 
 if __name__ == "__main__":
@@ -152,7 +106,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     current_file_path = os.path.abspath(__file__)
+    # os.path.dirname(path)：
+    # 这个函数返回去掉路径中的最后一个组件文件或文件夹的部分。
     if args.output_path is None:
+        # 退回vehicle-interaction-decision-making-main文件夹
         args.output_path = os.path.dirname(os.path.dirname(current_file_path))
     if args.config is None:
         config_file_path = os.path.join(os.path.dirname(os.path.dirname(current_file_path)),

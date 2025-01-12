@@ -39,6 +39,11 @@ class State:
 
     def to_list(self) -> List:
         return [self.x, self.y, self.yaw, self.v]
+    
+    def get_num_attributes(self) -> int:
+        print("state_dim: ", len(self.__dict__))
+        return len(self.__dict__)
+
 
 
 class StateList:
@@ -205,3 +210,4 @@ def kinematic_propagate(state: State, act: List[float], dt: float) -> State:
         next_state.v = -20
 
     return next_state
+

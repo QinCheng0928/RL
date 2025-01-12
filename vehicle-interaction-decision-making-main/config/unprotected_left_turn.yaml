@@ -2,6 +2,11 @@ delta_t: 0.25
 max_step: 8
 max_simulation_time: 20
 
+max_episodes: 1000
+max_timesteps: 300
+update_timestep: 2000
+print_freq: 20
+
 # environment
 map_size: 25
 lane_width: 4
@@ -22,6 +27,7 @@ vehicle_display_style: "realistic"
 is_show_predict_traj: false
 ego_vehicle: "vehilce_0"
 
+vehicle_num: 2
 vehicle_list:
   vehilce_0:
     level: 1
