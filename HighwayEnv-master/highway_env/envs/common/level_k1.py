@@ -26,39 +26,38 @@ class LevelK:
         return total_reward
 
 
-    # def update_state(self, env_copy, vehicle, time_step=0.5):
-    #     if np.linalg.norm(vehicle.position - vehicle.direction) < 10:
-    #         vehicle.position = vehicle.target_position
-    #         vehicle.speed =0
-    #     else:
-    #         vehicle.velocity += vehicle * time_step
-    #         vehicle.position += vehicle.velocity * time_step
-
-
     def get_acceleration(self, env_copy, vehicle, other_vehicles, k, time_step=0.5):
         other_vehicles_copy = deepcopy(other_vehicles)  # 创建副本
         if k == 0:
             for other_vehicle in other_vehicles_copy:
                 other_vehicle.speed = 0
                 other_vehicle.accelerate = 0
-        elif k == 1:
+        elif k >= 1 and k <= 3:
             for other_vehicle in other_vehicles_copy:
                 new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
                 new_other_vehicles.append(vehicle)
-                u2_k0 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 0, time_step)
-                other_vehicle.act(u2_k0)
-        elif k == 2:
-            for other_vehicle in other_vehicles_copy:
-                new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
-                new_other_vehicles.append(vehicle)
-                u2_k1 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 1, time_step)
-                other_vehicle.act(u2_k1)
-        elif k == 3:
-            for other_vehicle in other_vehicles_copy:
-                new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
-                new_other_vehicles.append(vehicle)
-                u3_k1 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 2, time_step)
-                other_vehicle.act(u3_k1)
+                temp_action = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, k-1, time_step)
+                other_vehicle.act(temp_action)
+        else:
+            print("Error: k should be 0, 1, 2 or 3.")
+        # elif k == 1:
+        #     for other_vehicle in other_vehicles_copy:
+        #         new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
+        #         new_other_vehicles.append(vehicle)
+        #         u2_k0 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 0, time_step)
+        #         other_vehicle.act(u2_k0)
+        # elif k == 2:
+        #     for other_vehicle in other_vehicles_copy:
+        #         new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
+        #         new_other_vehicles.append(vehicle)
+        #         u2_k1 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 1, time_step)
+        #         other_vehicle.act(u2_k1)
+        # elif k == 3:
+        #     for other_vehicle in other_vehicles_copy:
+        #         new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
+        #         new_other_vehicles.append(vehicle)
+        #         u3_k1 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 2, time_step)
+        #         other_vehicle.act(u3_k1)
 
         # 调试输出
         # print("Before calling choose_best_action:")
