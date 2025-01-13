@@ -22,8 +22,8 @@ print(current_directory)
 def train():
     n_cpu = 4
     batch_size = 128
-    # env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
-    env = gym.make('intersection-v0')
+    env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
+    # env = gym.make('intersection-v0')
     model = PPO(
         "MlpPolicy",
         env,
@@ -36,7 +36,7 @@ def train():
         verbose=2,
         tensorboard_log="intersection_ppo_random/",
         seed=2000,
-        device='cuda'  # 指定使用 GPU
+        device='cpu'  # 指定使用 GPU
     )
     # 检查使用的设备
     print("Device used:", model.policy.device)

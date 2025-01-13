@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import functools
 import itertools
+from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Union
+from highway_env.envs.common.level_k1 import LevelK
 
 import numpy as np
 from gymnasium import spaces
@@ -257,12 +259,29 @@ class DiscreteMetaAction(ActionType):
             
         self.actions_indexes = {v: k for k, v in self.ACTIONS_LONGI.items()}
 
+    def k_action(self, action: int) -> list:
+        self.env_copy = deepcopy(self.env)
+        self.best_actions = []
+        for i in range(4):
+            vehicle = self.env_copy.controlled_vehicles[i]
+            other_vehicles = [
+                self.env_copy.controlled_vehicles[j]
+                for j in range(4) if i != j
+            ]
+            best_action = LevelK.get_acceleration(self.env_copy, vehicle, other_vehicles, k = self.actions[int(action)][i] , time_step=0.5)
+            print("Type of best_action:", type(best_action))
+            print("Value of best_action:", best_action)
+            print('\n\n')
+            self.best_actions.append(best_action)
 
-    def k_action(self, action: int) -> None:
-        k = self.actions[int(action)]
-        
-        return ["FASTER", "FASTER", "FASTER", "FASTER"]
-    
+        return self.best_actions
+
+    def reward_k(self):
+        pass
+
+    def updata(self):
+        pass
+
     def space(self) -> spaces.Space:
         return spaces.Discrete(len(self.actions))
 
@@ -273,6 +292,7 @@ class DiscreteMetaAction(ActionType):
     def act(self, action: int | np.ndarray) -> None:
         # self.controlled_vehicle.act(self.actions[int(action)])
         # 执行多个车辆的动作
+
         for i in range(len(self.env.controlled_vehicles)):
             self.env.controlled_vehicles[i].act(self.k_action(int(action))[i])
 
