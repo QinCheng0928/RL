@@ -39,7 +39,9 @@ class RoadObject(ABC):
         :param speed: cartesian speed of object in the surface
         """
         self.road = road
+        # 物体在二维平面上的位置，使用一个 np.array 数组来表示。数组元素是物体在平面中的 x 和 y 坐标。
         self.position = np.array(position, dtype=np.float64)
+        # 物体的朝向角度。这个角度是相对于水平轴的正方向（通常是 x 轴），单位是弧度。
         self.heading = heading
         self.speed = speed
         self.lane_index = (
@@ -95,10 +97,13 @@ class RoadObject(ABC):
         :param other: the other vehicle or object
         :param dt: timestep to check for future collisions (at constant velocity)
         """
+        # 如果自己车和对方车不检测碰撞，则直接返回
         if other is self or not (self.check_collisions or other.check_collisions):
             return
+        # 如果自己和对方全步允许碰撞，则直接返回
         if not (self.collidable and other.collidable):
             return
+        # 当前是否相交、是否会相交、相交的平移量
         intersecting, will_intersect, transition = self._is_colliding(other, dt)
         if will_intersect:
             if self.solid and other.solid:
@@ -118,6 +123,7 @@ class RoadObject(ABC):
             if not other.solid:
                 other.hit = True
 
+    # 检测是否碰撞
     def _is_colliding(self, other, dt):
         # Fast spherical pre-check
         if (
@@ -132,11 +138,14 @@ class RoadObject(ABC):
                 ),
             )
         # Accurate rectangular check
+        # 检测两个多边形是否相交
+        # 返回当前是否相交、是否会相交、以及如果会相交时需要的平移向量。
         return utils.are_polygons_intersecting(
             self.polygon(), other.polygon(), self.velocity * dt, other.velocity * dt
         )
 
     # Just added for sake of compatibility
+    # 该方法将对象的属性转换为字典形式
     def to_dict(self, origin_vehicle=None, observe_intentions=True):
         d = {
             "presence": 1,
@@ -146,6 +155,7 @@ class RoadObject(ABC):
             "vy": 0.0,
             "cos_h": np.cos(self.heading),
             "sin_h": np.sin(self.heading),
+            # 车辆目标方向的余弦正弦值
             "cos_d": 0.0,
             "sin_d": 0.0,
         }
@@ -165,6 +175,7 @@ class RoadObject(ABC):
     def velocity(self) -> np.ndarray:
         return self.speed * self.direction
 
+    # 将车辆转换成多边形
     def polygon(self) -> np.ndarray:
         points = np.array(
             [
