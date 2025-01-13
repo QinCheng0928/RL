@@ -270,18 +270,13 @@ class DiscreteMetaAction(ActionType):
                 for j in range(4) if i != j
             ]
             best_action = self.level_k_instance.get_acceleration(self.env_copy, vehicle, other_vehicles, k = self.actions[int(action)][i] , time_step=0.5)
-            print("Type of best_action:", type(best_action))
-            print("Value of best_action:", best_action)
-            print('\n\n')
+            # print("Type of best_action:", type(best_action))
+            # print("Value of best_action:", best_action)
+            # print('\n\n')
             self.best_actions.append(best_action)
 
         return self.best_actions
 
-    def reward_k(self):
-        pass
-
-    def updata(self):
-        pass
 
     def space(self) -> spaces.Space:
         return spaces.Discrete(len(self.actions))

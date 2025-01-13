@@ -58,12 +58,12 @@ class LevelK:
                 new_other_vehicles = [veh for veh in other_vehicles_copy if veh is not other_vehicle]  # 修正此处
                 new_other_vehicles.append(vehicle)
                 u3_k1 = self.get_acceleration(env_copy, other_vehicle, new_other_vehicles, 2, time_step)
-                other_vehicle.update_state(u3_k1)
+                other_vehicle.act(u3_k1)
 
         # 调试输出
-        print("Before calling choose_best_action:")
-        print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
-        print(f"Other vehicles type: {type(other_vehicles_copy)}, Other vehicles: {other_vehicles_copy}")
+        # print("Before calling choose_best_action:")
+        # print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
+        # print(f"Other vehicles type: {type(other_vehicles_copy)}, Other vehicles: {other_vehicles_copy}")
 
         best_action = self.choose_best_action(vehicle, other_vehicles_copy, time_step)
         vehicle.accelerate = best_action
@@ -71,9 +71,9 @@ class LevelK:
 
 
     def choose_best_action(self, vehicle, other_vehicles, time_step=0.5):
-        print("Inside choose_best_action:")
-        print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
-        print(f"Other vehicles type: {type(other_vehicles)}, Other vehicles: {other_vehicles}")
+        # print("Inside choose_best_action:")
+        # print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
+        # print(f"Other vehicles type: {type(other_vehicles)}, Other vehicles: {other_vehicles}")
 
         actions = ["SLOWER", "IDLE", "FASTER"]
         best_action = None
@@ -84,7 +84,9 @@ class LevelK:
 
             vehicle.act(action)
 
-            predicted_reward = sum(self.reward(vehicle,other) for other in other_vehicles)
+            # ????????
+            # predicted_reward = sum(self.reward(vehicle,other) for other in other_vehicles)
+            predicted_reward = self.reward(vehicle, other_vehicles)
 
             if predicted_reward > best_reward:
                 best_reward = predicted_reward
