@@ -35,8 +35,6 @@ class LevelK:
     #         vehicle.position += vehicle.velocity * time_step
 
 
-
-    @classmethod
     def get_acceleration(self, env_copy, vehicle, other_vehicles, k, time_step=0.5):
         other_vehicles_copy = deepcopy(other_vehicles)  # 创建副本
         if k == 0:
@@ -67,7 +65,7 @@ class LevelK:
         print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
         print(f"Other vehicles type: {type(other_vehicles_copy)}, Other vehicles: {other_vehicles_copy}")
 
-        best_action = self.choose_best_action(vehicle, other_vehicles_copy, time_step)  # 在此处调用
+        best_action = self.choose_best_action(vehicle, other_vehicles_copy, time_step)
         vehicle.accelerate = best_action
         return best_action
 
