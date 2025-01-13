@@ -8,6 +8,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 import highway_env
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 current_directory = os.getcwd()
 print(current_directory)
@@ -27,8 +29,8 @@ def train():
     model = PPO(
         "MlpPolicy",
         env,
-        policy_kwargs=dict(net_arch=[dict(pi=[256, 256], vf=[256, 256])]),
-        n_steps=200,
+        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),
+        n_steps= batch_size * 12 // n_cpu,
         batch_size=batch_size,
         n_epochs=10,
         learning_rate=5e-4,
