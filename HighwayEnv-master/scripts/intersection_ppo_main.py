@@ -29,7 +29,7 @@ def train():
     model = PPO(
         "MlpPolicy",
         env,
-        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
         n_steps= batch_size * 12 // n_cpu,
         batch_size=batch_size,
         n_epochs=10,

@@ -4,7 +4,7 @@ import functools
 import itertools
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Union
-from highway_env.envs.common.level_k1 import LevelK
+from highway_env.envs.common.levelK import LevelK
 
 import numpy as np
 from gymnasium import spaces
@@ -14,7 +14,6 @@ from highway_env.utils import Vector
 from highway_env.vehicle.controller import MDPVehicle
 from highway_env.vehicle.dynamics import BicycleVehicle
 from highway_env.vehicle.kinematics import Vehicle
-
 
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
@@ -88,16 +87,16 @@ class ContinuousAction(ActionType):
     """Steering angle range: [-x, x], in rad."""
 
     def __init__(
-        self,
-        env: AbstractEnv,
-        acceleration_range: tuple[float, float] | None = None,
-        steering_range: tuple[float, float] | None = None,
-        speed_range: tuple[float, float] | None = None,
-        longitudinal: bool = True,
-        lateral: bool = True,
-        dynamical: bool = False,
-        clip: bool = True,
-        **kwargs,
+            self,
+            env: AbstractEnv,
+            acceleration_range: tuple[float, float] | None = None,
+            steering_range: tuple[float, float] | None = None,
+            speed_range: tuple[float, float] | None = None,
+            longitudinal: bool = True,
+            lateral: bool = True,
+            dynamical: bool = False,
+            clip: bool = True,
+            **kwargs,
     ) -> None:
         """
         Create a continuous action space.
@@ -166,16 +165,16 @@ class ContinuousAction(ActionType):
 
 class DiscreteAction(ContinuousAction):
     def __init__(
-        self,
-        env: AbstractEnv,
-        acceleration_range: tuple[float, float] | None = None,
-        steering_range: tuple[float, float] | None = None,
-        longitudinal: bool = True,
-        lateral: bool = True,
-        dynamical: bool = False,
-        clip: bool = True,
-        actions_per_axis: int = 3,
-        **kwargs,
+            self,
+            env: AbstractEnv,
+            acceleration_range: tuple[float, float] | None = None,
+            steering_range: tuple[float, float] | None = None,
+            longitudinal: bool = True,
+            lateral: bool = True,
+            dynamical: bool = False,
+            clip: bool = True,
+            actions_per_axis: int = 3,
+            **kwargs,
     ) -> None:
         super().__init__(
             env,
@@ -189,7 +188,7 @@ class DiscreteAction(ContinuousAction):
         self.actions_per_axis = actions_per_axis
 
     def space(self) -> spaces.Discrete:
-        return spaces.Discrete(self.actions_per_axis**self.size)
+        return spaces.Discrete(self.actions_per_axis ** self.size)
 
     def act(self, action: int) -> None:
         cont_space = super().space()
@@ -218,14 +217,13 @@ class DiscreteMetaAction(ActionType):
     # 对应环境配置部分智能体的数量改为4个车
     ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
 
-
     def __init__(
-        self,
-        env: AbstractEnv,
-        longitudinal: bool = True,
-        lateral: bool = True,
-        target_speeds: Vector | None = None,
-        **kwargs,
+            self,
+            env: AbstractEnv,
+            longitudinal: bool = True,
+            lateral: bool = True,
+            target_speeds: Vector | None = None,
+            **kwargs,
     ) -> None:
         """
         Create a discrete action space of meta-actions.
@@ -256,28 +254,17 @@ class DiscreteMetaAction(ActionType):
             raise ValueError(
                 "At least longitudinal or lateral actions must be included"
             )
-            
+
         self.actions_indexes = {v: k for k, v in self.ACTIONS_LONGI.items()}
-        self.level_k_instance = LevelK()  
+        self.level_k_instance = LevelK()
 
     def k_action(self, action: int) -> list:
         self.env_copy = deepcopy(self.env)
-        self.best_actions = []
         for i in range(4):
-            vehicle = self.env_copy.controlled_vehicles[i]
-            other_vehicles = [
-                self.env_copy.controlled_vehicles[j]
-                for j in range(4) if i != j
-            ]
-            best_action = self.level_k_instance.get_acceleration(self.env_copy, vehicle, other_vehicles, k = self.actions[int(action)][i] , time_step=0.5)
-            # print("Type of best_action:", type(best_action))
-            # print("Value of best_action:", best_action)
-            # print('\n\n')
-            self.best_actions.append(best_action)
-
-        # print("Best Actions List:", self.best_actions)
-        return self.best_actions
-
+            self.env_copy.controlled_vehicles[i].levelk = self.actions[int(action)][i]
+        self.best_action = self.level_k_instance.get_acceleration(self.env_copy, self.env_copy.controlled_vehicles,
+                                                                  time_step=0.5)
+        return self.best_action
 
     def space(self) -> spaces.Space:
         return spaces.Discrete(len(self.actions))
@@ -306,25 +293,25 @@ class DiscreteMetaAction(ActionType):
         network = self.controlled_vehicle.road.network
         for l_index in network.side_lanes(self.controlled_vehicle.lane_index):
             if (
-                l_index[2] < self.controlled_vehicle.lane_index[2]
-                and network.get_lane(l_index).is_reachable_from(
-                    self.controlled_vehicle.position
-                )
-                and self.lateral
+                    l_index[2] < self.controlled_vehicle.lane_index[2]
+                    and network.get_lane(l_index).is_reachable_from(
+                self.controlled_vehicle.position
+            )
+                    and self.lateral
             ):
                 actions.append(self.actions_indexes["LANE_LEFT"])
             if (
-                l_index[2] > self.controlled_vehicle.lane_index[2]
-                and network.get_lane(l_index).is_reachable_from(
-                    self.controlled_vehicle.position
-                )
-                and self.lateral
+                    l_index[2] > self.controlled_vehicle.lane_index[2]
+                    and network.get_lane(l_index).is_reachable_from(
+                self.controlled_vehicle.position
+            )
+                    and self.lateral
             ):
                 actions.append(self.actions_indexes["LANE_RIGHT"])
         if (
-            self.controlled_vehicle.speed_index
-            < self.controlled_vehicle.target_speeds.size - 1
-            and self.longitudinal
+                self.controlled_vehicle.speed_index
+                < self.controlled_vehicle.target_speeds.size - 1
+                and self.longitudinal
         ):
             actions.append(self.actions_indexes["FASTER"])
         if self.controlled_vehicle.speed_index > 0 and self.longitudinal:
