@@ -422,10 +422,11 @@ class Road:
         vehicle: kinematics.Vehicle,
         distance: float,
         count: int | None = None,
-        see_behind: bool = True,
+        see_behind: bool = True,    # 是否考虑车辆后方的物体
         sort: bool = True,
         vehicles_only: bool = False,
     ) -> object:
+        # 参数传递进来的车辆 vehicle
         vehicles = [
             v
             for v in self.vehicles

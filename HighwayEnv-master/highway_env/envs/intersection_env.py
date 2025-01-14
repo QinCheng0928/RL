@@ -53,7 +53,7 @@ class IntersectionEnv(AbstractEnv):
                 "arrived_reward": 100, # default=20(用20训练处理单种子情况)
                 "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
-                "normalize_reward": False, #
+                "normalize_reward": False,
                 "offroad_terminal": False,
             }
         )

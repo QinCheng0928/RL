@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 LaneIndex = Tuple[str, str, int]
 
-
+# 车辆的重要属性：position、heading、speed
 class RoadObject(ABC):
     """
     Common interface for objects that appear on the road.
@@ -22,8 +22,11 @@ class RoadObject(ABC):
     For now we assume all objects are rectangular.
     """
 
+    # 类属性是直接在类体中定义的变量，它们属于类本身，而不是某个实例。
+    # 类属性是所有实例共享的,如果在类本身修改了类属性的值，所有实例都会看到更新后的值。
     LENGTH: float = 2  # Object length [m]
     WIDTH: float = 2  # Object width [m]
+
 
     def __init__(
         self,
@@ -139,7 +142,7 @@ class RoadObject(ABC):
             )
         # Accurate rectangular check
         # 检测两个多边形是否相交
-        # 返回当前是否相交、是否会相交、以及如果会相交时需要的平移向量。
+        # 返回当前是否相交、是否会相交、以及如果会相交时需要的平移向量以避免碰撞。
         return utils.are_polygons_intersecting(
             self.polygon(), other.polygon(), self.velocity * dt, other.velocity * dt
         )
@@ -167,10 +170,12 @@ class RoadObject(ABC):
                 d[key] -= origin_dict[key]
         return d
 
+    # 根据heading得到方向向量direction
     @property
     def direction(self) -> np.ndarray:
         return np.array([np.cos(self.heading), np.sin(self.heading)])
 
+    # 根据heading和speed得到速度向量velocity
     @property
     def velocity(self) -> np.ndarray:
         return self.speed * self.direction
@@ -193,16 +198,19 @@ class RoadObject(ABC):
     def lane_distance_to(self, other: RoadObject, lane: AbstractLane = None) -> float:
         """
         Compute the signed distance to another object along a lane.
+        计算到车道上到另一个物体的有符号的距离。
 
         :param other: the other object
         :param lane: a lane
         :return: the distance to the other other [m]
         """
+        # np.nan表示缺失、无效或无法计算的数值
         if not other:
             return np.nan
         if not lane:
             lane = self.lane
         return (
+            # 将世界坐标系转化为局部坐标系（车道坐标系）
             lane.local_coordinates(other.position)[0]
             - lane.local_coordinates(self.position)[0]
         )
@@ -221,7 +229,7 @@ class RoadObject(ABC):
     def __repr__(self):
         return self.__str__()
 
-
+# 障碍物
 class Obstacle(RoadObject):
     """Obstacles on the road."""
 
@@ -231,7 +239,7 @@ class Obstacle(RoadObject):
         super().__init__(road, position, heading, speed)
         self.solid = True
 
-
+# 地标
 class Landmark(RoadObject):
     """Landmarks of certain areas on the road that must be reached."""
 

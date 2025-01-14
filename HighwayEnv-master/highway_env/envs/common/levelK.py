@@ -6,50 +6,35 @@ from copy import deepcopy
 
 class LevelK:
     def __init__(self):
-        self.action_map = {
-            "SLOWER": -5,
-            "IDLE": 0,
-            "FASTER": 5
-        }
         self.actions = ["SLOWER", "IDLE", "FASTER"]
 
-    def reward(self, vehicle):
-        speed_reward = vehicle.speed
-        total_reward = speed_reward
-        return total_reward
-
-
     def get_acceleration(self, env_copy, vehicle_list, time_step=0.5):
-
+        # 通过 levelk 排序，避免在每次循环中寻找最小值
+        vehicle_list_sorted = sorted(vehicle_list, key=lambda v: v.levelk)
         best_actions = [0] * len(vehicle_list)
-        vehicle_list_copy = deepcopy(vehicle_list)
-        for i in range(len(vehicle_list)):
-            index=-1
-            value_min=10
 
-            for j in range(4-i):
-                if value_min>vehicle_list[j].levelk:
-                    value_min=vehicle_list[j].levelk
-                    index=j
+        # 遍历车辆，按照排序依次选择动作
+        for i, vehicle in enumerate(vehicle_list_sorted):
+            # 获取其他车辆
+            other_vehicles = vehicle_list_sorted[:i] + vehicle_list_sorted[i + 1:]
 
-            vehicle=vehicle_list[index]
-
-            other_vehicles = [v for v in vehicle_list if v != vehicle]
-
+            # 假设优先级高的车辆会让优先级低的车辆停止
             for other_vehicle in other_vehicles:
                 if other_vehicle.levelk >= vehicle.levelk:
-                   other_vehicle.speed = 0
-                   other_vehicle.accelerate = 0
+                    other_vehicle.speed = 0
+                    other_vehicle.action["acceleration"] = 0
+                    other_vehicle.action["steering"] = 0
 
-            best_action = self.choose_best_action(vehicle, other_vehicles, time_step)
+            # 选择最优动作
+            best_action,best_reward = self.choose_best_action(env_copy, vehicle, other_vehicles, time_step)
             vehicle.act(best_action)
-            del vehicle_list_copy[index]
-            best_actions[index]=best_action
+            env_copy.road.step(1 / env_copy.config["simulation_frequency"])
+            best_actions[i] = best_action
 
-        return best_actions
+        return best_actions,best_reward
 
 
-    def choose_best_action(self, vehicle, other_vehicles, time_step=0.5):
+    def choose_best_action(self, env_copy, vehicle, other_vehicles, time_step=0.5):
         # print("Inside choose_best_action:")
         # print(f"Vehicle type: {type(vehicle)}, Vehicle: {vehicle}")
         # print(f"Other vehicles type: {type(other_vehicles)}, Other vehicles: {other_vehicles}")
@@ -58,16 +43,25 @@ class LevelK:
         best_reward = -np.inf
 
         for action in self.actions:
-            original =deepcopy(vehicle)
+            original_speed = vehicle.speed
+            original_accelerate = vehicle.action["acceleration"]
+            original_steering = vehicle.action["steering"]
 
+            # 更新该车辆（vehicle）的切向加速度和径向加速度
             vehicle.act(action)
+            # 依据环境中每辆车的加速度更新车辆的状态
+            env_copy.road.step(1 / env_copy.config["simulation_frequency"])
 
-            predicted_reward = self.reward(vehicle)
+            # 计算vehicle执行动作的奖励
+            predicted_reward = env_copy._agent_reward(action,vehicle)
 
             if predicted_reward > best_reward:
                 best_reward = predicted_reward
                 best_action = action
 
-            vehicle = original
+            # 恢复车辆状态
+            vehicle.speed = original_speed
+            vehicle.action["acceleration"] = original_accelerate
+            vehicle.action["steering"] = original_steering
 
-        return best_action
+        return best_action, best_reward

@@ -239,6 +239,7 @@ class AbstractEnv(gym.Env):
 
         The action is executed by the ego-vehicle, and all other vehicles on the road performs their default behaviour
         for several simulation timesteps until the next decision making step.
+        该动作由自身车辆执行，道路上的所有其他车辆均在几个模拟时间步内执行其默认行为，直到下一个决策步骤。
 
         :param action: the action performed by the ego-vehicle
         :return: a tuple (observation, reward, terminated, truncated, info)

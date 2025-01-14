@@ -262,8 +262,11 @@ class DiscreteMetaAction(ActionType):
         self.env_copy = deepcopy(self.env)
         for i in range(4):
             self.env_copy.controlled_vehicles[i].levelk = self.actions[int(action)][i]
-        self.best_action = self.level_k_instance.get_acceleration(self.env_copy, self.env_copy.controlled_vehicles,
+        self.best_action,best_reward = self.level_k_instance.get_acceleration(self.env_copy, self.env_copy.controlled_vehicles,
                                                                   time_step=0.5)
+        print("Best Action:", self.best_action)
+        print("k_action:", self.actions[int(action)])
+        print("Best Reward:", best_reward)
         return self.best_action
 
     def space(self) -> spaces.Space:

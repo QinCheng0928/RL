@@ -41,6 +41,7 @@ class Vehicle(RoadObject):
     ):
         super().__init__(road, position, heading, speed)
         self.prediction_type = predition_type
+        # 切向加速度 和 径向加速度
         self.action = {"steering": 0, "acceleration": 0}
         self.crashed = False
         self.impact = None
@@ -118,15 +119,19 @@ class Vehicle(RoadObject):
             v.color = vehicle.color
         return v
 
+    # 简单修改切向加速度和径向加速度的值
     def act(self, action: dict | str = None) -> None:
         """
         Store an action to be repeated.
+        通过参数修改原始action = {"steering": 0, "acceleration": 0}
 
         :param action: the input action
         """
         if action:
             self.action = action
 
+    # 利用了一个神奇的、我看不懂的自行车模型来模拟车辆的运动
+    # 实际执行了车辆的运动
     def step(self, dt: float) -> None:
         """
         Propagate the vehicle state given its actions.
@@ -152,6 +157,7 @@ class Vehicle(RoadObject):
         self.speed += self.action["acceleration"] * dt
         self.on_state_update()
 
+    # 限制车辆的速度，如果车辆超速会逐渐减少加速度
     def clip_actions(self) -> None:
         if self.crashed:
             self.action["steering"] = 0
@@ -176,6 +182,7 @@ class Vehicle(RoadObject):
             if self.road.record_history:
                 self.history.appendleft(self.create_from(self))
 
+    # 预测车辆的轨迹
     def predict_trajectory_constant_speed(
         self, times: np.ndarray
     ) -> tuple[list[np.ndarray], list[float]]:
@@ -186,6 +193,7 @@ class Vehicle(RoadObject):
         else:
             raise ValueError("Unknown predition type")
 
+        # 每个元素是对应的时间间隔
         dt = np.diff(np.concatenate(([0.0], times)))
 
         positions = []
@@ -202,6 +210,7 @@ class Vehicle(RoadObject):
     def velocity(self) -> np.ndarray:
         return self.speed * self.direction  # TODO: slip angle beta should be used here
 
+    # 计算并返回车辆的目标位置。
     @property
     def destination(self) -> np.ndarray:
         if getattr(self, "route", None):
@@ -216,6 +225,7 @@ class Vehicle(RoadObject):
         else:
             return self.position
 
+    # 返回从当前车辆位置指向目标位置的单位方向向量。
     @property
     def destination_direction(self) -> np.ndarray:
         if (self.destination != self.position).any():
@@ -225,6 +235,11 @@ class Vehicle(RoadObject):
         else:
             return np.zeros((2,))
 
+    '''
+        long:车辆在车道上的纵向位置
+        lat:车辆在车道上的横向偏移（与车道中心的距离）
+        ang:车辆相对于车道方向的角度
+    '''
     @property
     def lane_offset(self) -> np.ndarray:
         if self.lane is not None:

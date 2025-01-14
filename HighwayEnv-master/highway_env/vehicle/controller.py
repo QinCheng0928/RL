@@ -30,6 +30,7 @@ class ControlledVehicle(Vehicle):
     KP_HEADING = 1 / TAU_HEADING
     KP_LATERAL = 1 / TAU_LATERAL  # [1/s]
     MAX_STEERING_ANGLE = np.pi / 3  # [rad]
+    # 车辆速度的增量
     DELTA_SPEED = 5  # [m/s]
     
 
@@ -87,15 +88,20 @@ class ControlledVehicle(Vehicle):
             self.route = [self.lane_index]
         return self
 
+    # 高级控制车辆的方法
     def act(self, action: Union[dict, str] = None) -> None:
         """
         Perform a high-level action to change the desired lane or speed.
+        执行高级操作来改变所需的车道或速度
 
         - If a high-level action is provided, update the target speed and lane;
         - then, perform longitudinal and lateral control.
+        - 如果提供了高级操作，则更新目标速度和车道；
+        - 然后，执行纵向和横向控制。
 
         :param action: a high-level action
         """
+        # 自动选择下一条道路
         self.follow_road()
         if action == "FASTER":
             self.target_speed += self.DELTA_SPEED
@@ -146,6 +152,7 @@ class ControlledVehicle(Vehicle):
     def steering_control(self, target_lane_index: LaneIndex) -> float:
         """
         Steer the vehicle to follow the center of an given lane.
+        控制车辆沿着指定车道的中心行驶
 
         1. Lateral position is controlled by a proportional controller yielding a lateral speed command
         2. Lateral speed command is converted to a heading reference
@@ -200,6 +207,7 @@ class ControlledVehicle(Vehicle):
 
     def get_routes_at_intersection(self) -> List[Route]:
         """Get the list of routes that can be followed at the next intersection."""
+        """获取下一个路口可以遵循的路线列表"""
         if not self.route:
             return []
         for index in range(min(len(self.route), 3)):
@@ -222,6 +230,7 @@ class ControlledVehicle(Vehicle):
     def set_route_at_intersection(self, _to: int) -> None:
         """
         Set the road to be followed at the next intersection.
+        设置在下一个交叉路口要走的车道
 
         Erase current planned route.
 
@@ -234,6 +243,7 @@ class ControlledVehicle(Vehicle):
                 _to = self.road.np_random.integers(len(routes))
             self.route = routes[_to % len(routes)]
 
+    # 预测位置
     def predict_trajectory_constant_speed(
         self, times: np.ndarray
     ) -> Tuple[List[np.ndarray], List[float]]:
@@ -256,7 +266,7 @@ class ControlledVehicle(Vehicle):
 
 class MDPVehicle(ControlledVehicle):
     """A controlled vehicle with a specified discrete range of allowed target speeds."""
-
+    """具有离散目标速度的受控车辆。"""
     DEFAULT_TARGET_SPEEDS = np.linspace(20, 30, 3)
 
     def __init__(
