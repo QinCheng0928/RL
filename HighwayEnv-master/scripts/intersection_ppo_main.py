@@ -23,7 +23,7 @@ print(current_directory)
 
 def train():
     n_cpu = 4
-    batch_size = 128
+    batch_size = 8
     env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
     # env = gym.make('intersection-v0')
     model = PPO(
