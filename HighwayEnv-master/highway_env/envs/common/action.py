@@ -264,9 +264,9 @@ class DiscreteMetaAction(ActionType):
             self.env_copy.controlled_vehicles[i].levelk = self.actions[int(action)][i]
         self.best_action,best_reward = self.level_k_instance.get_acceleration(self.env_copy, self.env_copy.controlled_vehicles,
                                                                   time_step=0.5)
-        # print("Best Action:", self.best_action)
-        # print("k_action:", self.actions[int(action)])
-        # print("Best Reward:", best_reward)
+        print("Best Action:", self.best_action)
+        print("k_action:", self.actions[int(action)])
+        print("Best Reward:", best_reward)
         return self.best_action
 
     def space(self) -> spaces.Space:
@@ -278,8 +278,8 @@ class DiscreteMetaAction(ActionType):
 
     def act(self, action: int | np.ndarray) -> None:
         # self.controlled_vehicle.act(self.actions[int(action)])
+        
         # 执行多个车辆的动作
-
         for i in range(len(self.env.controlled_vehicles)):
             self.env.controlled_vehicles[i].act(self.k_action(int(action))[i])
 
