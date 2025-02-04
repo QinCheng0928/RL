@@ -4,7 +4,7 @@ import functools
 import itertools
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Union
-from highway_env.envs.common.levelK import LevelK
+from highway_env.envs.common.levelK2 import LevelK
 
 import numpy as np
 from gymnasium import spaces
@@ -215,6 +215,7 @@ class DiscreteMetaAction(ActionType):
 
     # level-k需要的智能体k值的组合，先固定4个车
     # 对应环境配置部分智能体的数量改为4个车
+    # repeat表示数组的长度为4，即四辆受控车
     ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
 
     def __init__(
@@ -258,15 +259,16 @@ class DiscreteMetaAction(ActionType):
         self.actions_indexes = {v: k for k, v in self.ACTIONS_LONGI.items()}
         self.level_k_instance = LevelK()
 
+    # actions = ACTIONS_K，型如{0：[0,0,0,0],1:[0,0,0,1]}
+    # action型如 78
+    # 返回值如：[”SLOWER“，”SLOWER“，”SLOWER“，”SLOWER“]
     def k_action(self, action: int) -> list:
         self.env_copy = deepcopy(self.env)
         for i in range(4):
             self.env_copy.controlled_vehicles[i].levelk = self.actions[int(action)][i]
-        self.best_action,best_reward = self.level_k_instance.get_acceleration(self.env_copy, self.env_copy.controlled_vehicles,
-                                                                  time_step=0.5)
-        print("Best Action:", self.best_action)
-        print("k_action:", self.actions[int(action)])
-        print("Best Reward:", best_reward)
+        self.best_action = self.level_k_instance.get_acceleration(self.env_copy)
+        # print("List of k combinations:", self.actions[int(action)])
+        # print("Best Action List:", self.best_action)
         return self.best_action
 
     def space(self) -> spaces.Space:
@@ -280,8 +282,9 @@ class DiscreteMetaAction(ActionType):
         # self.controlled_vehicle.act(self.actions[int(action)])
         
         # 执行多个车辆的动作
+        temporary_action = self.k_action(int(action))
         for i in range(len(self.env.controlled_vehicles)):
-            self.env.controlled_vehicles[i].act(self.k_action(int(action))[i])
+            self.env.controlled_vehicles[i].act(temporary_action[i])
 
     def get_available_actions(self) -> list[int]:
         """

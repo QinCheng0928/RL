@@ -39,6 +39,7 @@ def train():
         tensorboard_log="intersection_ppo_random/",
         seed=2000,
         device='cuda'  # 指定使用 GPU
+        # device='cpu'
     )
     # 检查使用的设备
     print("Device used:", model.policy.device)
