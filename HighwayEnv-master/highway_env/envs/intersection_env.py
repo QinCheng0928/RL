@@ -141,8 +141,7 @@ class IntersectionEnv(AbstractEnv):
         self._make_vehicles(self.config["initial_vehicle_count"])
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
-        # 这里action是k的组合
-        # 需要在下面添加k到动作的转化
+
         obs, reward, terminated, truncated, info = super().step(action)
         self._clear_vehicles()
         self._spawn_vehicle(spawn_probability=self.config["spawn_probability"])
