@@ -21,7 +21,7 @@ class IntersectionEnv(AbstractEnv):
             {
                 "observation": {
                     "type": "Kinematics",
-                    "vehicles_count": 6,
+                    "vehicles_count": 100,
                     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                     "features_range": {
                         "x": [-1000, 1000],
@@ -41,8 +41,8 @@ class IntersectionEnv(AbstractEnv):
                 },
                 "duration": 30,  # [s]
                 "destination": "o1",
-                "controlled_vehicles": 4, # 智能体的数量
-                "initial_vehicle_count": 10,
+                "controlled_vehicles": 4,       # 智能体的数量
+                "initial_vehicle_count": 0,    # 初始随机车辆的数量
                 "spawn_probability": 0.6,
                 "screen_width": 600,
                 "screen_height": 600,
@@ -166,7 +166,9 @@ class IntersectionEnv(AbstractEnv):
         right_turn_radius = lane_width + 5  # [m}
         left_turn_radius = right_turn_radius + lane_width  # [m}
         outer_distance = right_turn_radius + lane_width / 2
-        access_length = 50 + 50  # [m]
+        # 道路长度
+        # access_length = 50 + 50  # [m]
+        access_length = 30
 
         net = RoadNetwork()
         n, c, s = LineType.NONE, LineType.CONTINUOUS, LineType.STRIPED
@@ -270,28 +272,28 @@ class IntersectionEnv(AbstractEnv):
         vehicle_type.COMFORT_ACC_MIN = -3
 
         # Random vehicles
-        # 随机车辆：在环境中模拟普通交通流量的车辆
-        simulation_steps = 3
-        for t in range(n_vehicles - 1):
-            self._spawn_vehicle(np.linspace(0, 80, n_vehicles)[t])
-        for _ in range(simulation_steps):
-            [
-                (
-                    self.road.act(),
-                    self.road.step(1 / self.config["simulation_frequency"]),
-                )
-                for _ in range(self.config["simulation_frequency"])
-            ]
+        # n_vehicles = self.config["initial_vehicle_count"]
+        
+        # for t in range(n_vehicles - 1):
+        #     self._spawn_vehicle(np.linspace(0, 80, n_vehicles)[t])
+        # simulation_steps = 3
+        # for _ in range(simulation_steps):
+        #     [
+        #         (
+        #             self.road.act(),
+        #             self.road.step(1 / self.config["simulation_frequency"]),
+        #         )
+        #         for _ in range(self.config["simulation_frequency"])
+        #     ]
 
         # Challenger vehicle
-        # 挑战车辆：一个特殊车辆，用于增加环境中的挑战性
-        self._spawn_vehicle(
-            60,
-            spawn_probability=1,
-            go_straight=True,
-            position_deviation=0.1,
-            speed_deviation=0,
-        )
+        # self._spawn_vehicle(
+        #     60,
+        #     spawn_probability=1,
+        #     go_straight=True,
+        #     position_deviation=0.1,
+        #     speed_deviation=0,
+        # )
 
         self.controlled_vehicles = []
 
@@ -314,7 +316,7 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position(60 + 5 * local_rng.normal(1), 0),  # 使用局部随机数
+                ego_lane.position(20 + 5 * local_rng.normal(1), 0),  # 使用局部随机数
                 speed=ego_lane.speed_limit,
                 heading=ego_lane.heading_at(60),
             )

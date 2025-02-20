@@ -281,8 +281,8 @@ class AbstractEnv(gym.Env):
                 )
                 == 0
             ):
+                # 动作的action需要模型输出的数
                 self.action_type.act(action)
-                # 这里调用act
 
             self.road.act()
             self.road.step(1 / self.config["simulation_frequency"])

@@ -124,6 +124,7 @@ class AbstractLane:
             longitudinal, _ = self.local_coordinates(position)
         return longitudinal > self.length - self.VEHICLE_LENGTH / 2
 
+    # 考虑了车辆在道路外的情况
     def distance(self, position: np.ndarray):
         """Compute the L1 distance [m] from a position to the lane."""
         s, r = self.local_coordinates(position)

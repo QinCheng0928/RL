@@ -39,6 +39,7 @@ class RoadNetwork:
             self.graph[_from][_to] = []
         self.graph[_from][_to].append(lane)
 
+    # index中的id是list[AbstractLane]的索引
     def get_lane(self, index: LaneIndex) -> AbstractLane:
         """
         Get the lane geometry corresponding to a given index in the road network.

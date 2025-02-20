@@ -22,7 +22,7 @@ print(current_directory)
 # ==================================
 
 def train():
-    n_cpu = 4
+    n_cpu = 1
     batch_size = 8
     env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
     # env = gym.make('intersection-v0')
@@ -38,52 +38,31 @@ def train():
         verbose=2,
         tensorboard_log="intersection_ppo_random/",
         seed=2000,
-        device='cuda'  # 指定使用 GPU
-        # device='cpu'
+        device='cuda',  # 指定使用 GPU
+        # device='cpu', # 指定使用 CPU
     )
     # 检查使用的设备
     print("Device used:", model.policy.device)
     # Train the agent
-    model.learn(total_timesteps=int(2e5))
+    model.learn(total_timesteps=int(10))
     # Save the agent
     model.save("intersection_ppo_random/model")    
 
 def evaluate():
-    model = PPO.load(current_directory + "\intersection_ppo_random\model")
+    model = PPO.load(current_directory + "\..\intersection_ppo_random\model")
     env = gym.make("intersection-v0", render_mode="human")
-    
-    # 计数器，记录奖励小于0的次数
-    negative_rewards_count = 0
-    total_episodes = 50  # 评估的总回合数
-    
-    for i in range(total_episodes):
+
+    for i in range(1):
         obs, info = env.reset()
         done = truncated = False
-        rewards = 0.0
         while not (done or truncated):
             action, _ = model.predict(obs)
             obs, reward, done, truncated, info = env.step(action)
-            rewards += reward
             env.render()
 
-            # 获取并打印受控车辆的速度和动作
-            if hasattr(env.unwrapped, "controlled_vehicles") and env.unwrapped.controlled_vehicles:
-                controlled_vehicle_speed = env.unwrapped.controlled_vehicles[0].speed
-                # print("Controlled Vehicle Speed:", controlled_vehicle_speed)
-                # print("Selected Action:", action)
-        
-        print(f"{i}th: reward = {rewards}")
-        
-        # 如果奖励小于0，则增加计数器
-        if rewards < 0:
-            negative_rewards_count += 1
-    
-    # 计算奖励小于0的比例
-    negative_ratio = negative_rewards_count / total_episodes
-    print(f"撞车比例: {negative_ratio:.2f}")
 
 if __name__ == "__main__":
-    istrain = True
+    istrain = False
     if istrain:
         print("Training...")
         train()
