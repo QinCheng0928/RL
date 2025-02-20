@@ -22,7 +22,7 @@ print(current_directory)
 # ==================================
 
 def train():
-    n_cpu = 1
+    n_cpu = 6
     batch_size = 8
     env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
     # env = gym.make('intersection-v0')
@@ -44,15 +44,15 @@ def train():
     # 检查使用的设备
     print("Device used:", model.policy.device)
     # Train the agent
-    model.learn(total_timesteps=int(10))
+    model.learn(total_timesteps=int(1e5))
     # Save the agent
-    model.save("intersection_ppo_random/model")    
+    model.save("intersection_ppo_random/model")
 
 def evaluate():
-    model = PPO.load(current_directory + "\..\intersection_ppo_random\model")
+    model = PPO.load(current_directory + "intersection_ppo_random\model")
     env = gym.make("intersection-v0", render_mode="human")
 
-    for i in range(1):
+    for i in range(10):
         obs, info = env.reset()
         done = truncated = False
         while not (done or truncated):
@@ -62,7 +62,7 @@ def evaluate():
 
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()

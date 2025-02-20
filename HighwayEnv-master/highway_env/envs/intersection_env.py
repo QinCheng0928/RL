@@ -39,10 +39,10 @@ class IntersectionEnv(AbstractEnv):
                     "lateral": False,
                     "target_speeds": [0, 4.5, 9],
                 },
-                "duration": 30,  # [s]
+                "duration": 20,  # [s]
                 "destination": "o1",
-                "controlled_vehicles": 4,       # 智能体的数量
-                "initial_vehicle_count": 0,    # 初始随机车辆的数量
+                "controlled_vehicles": 4,
+                "initial_vehicle_count": 0,
                 "spawn_probability": 0.6,
                 "screen_width": 600,
                 "screen_height": 600,
@@ -50,7 +50,7 @@ class IntersectionEnv(AbstractEnv):
                 "scaling": 5.5 * 1.3,
                 "collision_reward": -500,
                 "high_speed_reward": 10,
-                "arrived_reward": 100, # default=20(用20训练处理单种子情况)
+                "arrived_reward": 100, 
                 "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
@@ -121,7 +121,6 @@ class IntersectionEnv(AbstractEnv):
         """The episode is over when a collision occurs or when the access ramp has been passed."""
         return vehicle.crashed or self.has_arrived(vehicle)
 
-    # 判断任务是否因为超时而被截断
     def _is_truncated(self) -> bool:
         """The episode is truncated if the time limit is reached."""
         return self.time >= self.config["duration"]
@@ -144,7 +143,7 @@ class IntersectionEnv(AbstractEnv):
 
         obs, reward, terminated, truncated, info = super().step(action)
         self._clear_vehicles()
-        self._spawn_vehicle(spawn_probability=self.config["spawn_probability"])
+        # self._spawn_vehicle(spawn_probability=self.config["spawn_probability"])
         return obs, reward, terminated, truncated, info
 
     def _make_road(self) -> None:
@@ -303,15 +302,19 @@ class IntersectionEnv(AbstractEnv):
         # print(f"Fixed Local Seed: {local_rng}")
         
         for ego_id in range(self.config["controlled_vehicles"]):
-            # 随机选择起点和终点，确保起点 != 终点
-            origin_index = local_rng.integers(0, 4)  # 随机起点索引，4 表示十字路口有4条道路
-            destination_index = origin_index
-            while destination_index == origin_index:
-                destination_index = local_rng.integers(0, 4)
+            # origin_index = local_rng.integers(0, 4)
+            # destination_index = origin_index
+            # while destination_index == origin_index:
+            #     destination_index = local_rng.integers(0, 4)
 
             # 获取起点和目标终点
-            ego_lane = self.road.network.get_lane((f"o{origin_index}", f"ir{origin_index}", 0))
-            destination = f"o{destination_index}"
+            # ego_lane = self.road.network.get_lane((f"o{origin_index}", f"ir{origin_index}", 0))
+            # destination = f"o{destination_index}"
+
+            # 全部左转
+            ego_lane = self.road.network.get_lane((f"o{ego_id}", f"ir{ego_id}", 0))
+            destination = f"o{(ego_id + 1) % 4}"
+            # destination = f"o{ego_id}"
 
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
@@ -325,8 +328,6 @@ class IntersectionEnv(AbstractEnv):
                 ego_vehicle.plan_route_to(destination)
                 ego_vehicle.speed_index = ego_vehicle.speed_to_index(ego_lane.speed_limit)
                 ego_vehicle.target_speed = ego_vehicle.index_to_speed(ego_vehicle.speed_index)
-                # 打印每辆车的起点和终点
-                # print(f"Vehicle {ego_id}: Origin -> o{origin_index}, Destination -> o{destination_index}")
             except AttributeError:
                 pass
 
@@ -335,12 +336,12 @@ class IntersectionEnv(AbstractEnv):
             self.controlled_vehicles.append(ego_vehicle)
 
             # 避免早期碰撞，移除可能产生冲突的车辆
-            for v in self.road.vehicles:
-                if (
-                    v is not ego_vehicle
-                    and np.linalg.norm(v.position - ego_vehicle.position) < 20
-                ):
-                    self.road.vehicles.remove(v)
+            # for v in self.road.vehicles:
+            #     if (
+            #         v is not ego_vehicle
+            #         and np.linalg.norm(v.position - ego_vehicle.position) < 20
+            #     ):
+            #         self.road.vehicles.remove(v)
 
 
 
@@ -390,7 +391,7 @@ class IntersectionEnv(AbstractEnv):
             or not (is_leaving(vehicle) or vehicle.route is None or vehicle.crashed)
         ]
 
-    def has_arrived(self, vehicle: Vehicle, exit_distance: float = 25) -> bool:
+    def has_arrived(self, vehicle: Vehicle, exit_distance: float = 10) -> bool:
         return (
             "il" in vehicle.lane_index[0]
             and "o" in vehicle.lane_index[1]
