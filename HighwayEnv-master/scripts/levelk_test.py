@@ -15,7 +15,8 @@ warnings.filterwarnings("ignore")
 
 
 def is_truncated(env) -> bool:
-    return env.time >= env.config["duration"]
+    # return env.time >= env.config["duration"]
+    return env.time >= 1000
 
 def is_terminated(env) -> bool:
     return (
@@ -25,6 +26,10 @@ def is_terminated(env) -> bool:
     )
     
 def get_action_table(count_vehicle, count_k, env):
+    frames = int(
+            env.config["simulation_frequency"] // env.config["policy_frequency"]
+        )
+    frames = 20
     # 保存动作的列表，先索引vehicle，在索引k
     dp = [["" for _ in range(count_k)] for _ in range(count_vehicle)]
 
@@ -41,7 +46,9 @@ def get_action_table(count_vehicle, count_k, env):
                             i.speed = 0
                         else:
                             temp_env.controlled_vehicles[vehicle].act(cur_action)
-                    temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                    for frame in range(frames):
+                        temp_env.road.act()
+                        temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                     predicted_reward = temp_env.my_reward(cur_action)
                     if predicted_reward > maxvalue:
                         maxvalue = predicted_reward
@@ -52,7 +59,9 @@ def get_action_table(count_vehicle, count_k, env):
                             temp_env.controlled_vehicles[i].act(dp[i][k - 1])
                         else:
                             temp_env.controlled_vehicles[vehicle].act(cur_action)
-                    temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                    for frame in range(frames):
+                        temp_env.road.act()
+                        temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                     predicted_reward = temp_env.my_reward(cur_action)
                     if predicted_reward > maxvalue:
                         maxvalue = predicted_reward
@@ -72,8 +81,10 @@ if __name__ == '__main__':
     truncated = False
     while not (terminated or truncated):
         best_action_table = get_action_table(count_vehicle, count_k, env)
-        print("best_action_table:", best_action_table)
+        # print("best_action_table:", best_action_table)
+        
         maxvalue = -np.inf
+        best_action = [0] * count_vehicle
         for i in range(count_k):
             for j in range(count_k):
                 for k in range(count_k):

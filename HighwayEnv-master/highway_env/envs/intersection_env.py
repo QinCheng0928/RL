@@ -109,7 +109,7 @@ class IntersectionEnv(AbstractEnv):
         return {
             "collision_reward": vehicle.crashed,
             # "high_speed_reward": np.clip(scaled_speed, 0, 1),
-            "high_speed_reward": np.clip(scaled_speed, -1, 1),
+            "high_speed_reward": np.clip(scaled_speed, -2, 2),
             "arrived_reward": self.has_arrived(vehicle),
             "stop_reward": vehicle.speed == 0,
             # "on_road_reward": vehicle.on_road,
@@ -173,7 +173,7 @@ class IntersectionEnv(AbstractEnv):
         outer_distance = right_turn_radius + lane_width / 2
         # 道路长度
         # access_length = 50 + 50  # [m]
-        access_length = 30
+        access_length = 20  # [m]
 
         net = RoadNetwork()
         n, c, s = LineType.NONE, LineType.CONTINUOUS, LineType.STRIPED
@@ -325,7 +325,7 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position(20 + 5 * local_rng.normal(1), 0),  # 使用局部随机数
+                ego_lane.position( 5 * local_rng.normal(1), 0), 
                 speed=ego_lane.speed_limit,
                 heading=ego_lane.heading_at(60),
             )
