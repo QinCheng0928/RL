@@ -39,7 +39,7 @@ class IntersectionEnv(AbstractEnv):
                     "lateral": False,
                     "target_speeds": [0, 4.5, 9],
                 },
-                "duration": 20,  # [s]
+                "duration": 13,  # [s]
                 "destination": "o1",
                 "controlled_vehicles": 4,
                 "initial_vehicle_count": 0,
@@ -48,10 +48,10 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -500,
-                "high_speed_reward": 10,
-                "arrived_reward": 100, 
-                "stop_reward": -50,
+                "collision_reward": -5,
+                "high_speed_reward": 1,
+                "arrived_reward": 1, 
+                "stop_reward": -5,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
                 "offroad_terminal": False,
