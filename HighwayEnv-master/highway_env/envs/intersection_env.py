@@ -48,10 +48,10 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -5,
-                "high_speed_reward": 1,
-                "arrived_reward": 1, 
-                "stop_reward": -5,
+                "collision_reward": -500,
+                "high_speed_reward": 10,
+                "arrived_reward": 100, 
+                "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
                 "offroad_terminal": False,
@@ -60,6 +60,12 @@ class IntersectionEnv(AbstractEnv):
         return config
 
     def _reward(self, action: int) -> float:
+        """Aggregated reward, for cooperative agents."""
+        return sum(
+            self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles
+        ) / len(self.controlled_vehicles)
+        
+    def my_reward(self, action: int) -> float:
         """Aggregated reward, for cooperative agents."""
         return sum(
             self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles

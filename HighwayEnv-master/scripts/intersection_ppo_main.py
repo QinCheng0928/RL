@@ -62,7 +62,7 @@ def evaluate():
 
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()

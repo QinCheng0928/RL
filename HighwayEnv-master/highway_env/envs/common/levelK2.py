@@ -29,7 +29,6 @@ class LevelK:
                                 i.speed=0
                             else:
                                 temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        temp_env.road.act()
                         temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                         predicted_reward = temp_env._reward(cur_action)
                         if predicted_reward > maxvalue:
@@ -41,7 +40,6 @@ class LevelK:
                                 temp_env.controlled_vehicles[i].act(dp[i][k-1])
                             else:
                                 temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        temp_env.road.act()
                         temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                         predicted_reward = temp_env._reward(cur_action)
                         if predicted_reward > maxvalue:

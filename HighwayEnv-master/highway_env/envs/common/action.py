@@ -268,7 +268,7 @@ class DiscreteMetaAction(ActionType):
             self.env_copy.controlled_vehicles[i].levelk = self.actions[int(action)][i]
         self.best_action = self.level_k_instance.get_acceleration(self.env_copy)
         # print("List of k combinations:", self.actions[int(action)])
-        # print("Best Action List:", self.best_action)
+        print("Best Action List:", self.best_action)
         return self.best_action
 
     def space(self) -> spaces.Space:

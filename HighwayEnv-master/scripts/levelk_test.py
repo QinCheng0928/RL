@@ -1,12 +1,30 @@
 import numpy as np
 import gymnasium as gym
+from stable_baselines3.common.env_util import make_vec_env
+
 from copy import deepcopy
+import sys
+import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+import highway_env
+from highway_env.envs.intersection_env import IntersectionEnv
+import warnings
+warnings.filterwarnings("ignore")
 
-# 定义常数
-count_vehicle = 4
-count_k = 4
 
-def action_table(env):
+def is_truncated(env) -> bool:
+    return env.time >= env.config["duration"]
+
+def is_terminated(env) -> bool:
+    return (
+        any(vehicle.crashed for vehicle in env.controlled_vehicles)
+        or all(env.has_arrived(vehicle) for vehicle in env.controlled_vehicles)
+        or (env.config["offroad_terminal"] and not env.vehicle.on_road)
+    )
+    
+def get_action_table(count_vehicle, count_k, env):
     # 保存动作的列表，先索引vehicle，在索引k
     dp = [["" for _ in range(count_k)] for _ in range(count_vehicle)]
 
@@ -23,9 +41,8 @@ def action_table(env):
                             i.speed = 0
                         else:
                             temp_env.controlled_vehicles[vehicle].act(cur_action)
-                    temp_env.road.act()
                     temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                    predicted_reward = temp_env._reward(cur_action)
+                    predicted_reward = temp_env.my_reward(cur_action)
                     if predicted_reward > maxvalue:
                         maxvalue = predicted_reward
                         dp[vehicle][k] = cur_action
@@ -35,20 +52,55 @@ def action_table(env):
                             temp_env.controlled_vehicles[i].act(dp[i][k - 1])
                         else:
                             temp_env.controlled_vehicles[vehicle].act(cur_action)
-                    temp_env.road.act()
                     temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                    predicted_reward = temp_env._reward(cur_action)
+                    predicted_reward = temp_env.my_reward(cur_action)
                     if predicted_reward > maxvalue:
                         maxvalue = predicted_reward
                         dp[vehicle][k] = cur_action
+    return dp
 
-
-
-if __name__ == "__mian__":
+if __name__ == '__main__':
     # 创建环境
     env = gym.make("intersection-v0", render_mode="human")
-    # 获得车辆不同action的列表
-    best_actions_table = action_table(env)
+    
+    # 定义常数
+    count_vehicle = len(env.controlled_vehicles)
+    count_k = 4
+    
+    obs, info = env.reset()
+    terminated = False
+    truncated = False
+    while not (terminated or truncated):
+        best_action_table = get_action_table(count_vehicle, count_k, env)
+        print("best_action_table:", best_action_table)
+        maxvalue = -np.inf
+        for i in range(count_k):
+            for j in range(count_k):
+                for k in range(count_k):
+                    for l in range(count_k):
+                        temp_env = deepcopy(env)
+                        temp_reward = temp_env.my_reward([best_action_table[0][i], best_action_table[1][j], best_action_table[2][k], best_action_table[3][l]])
+                        if temp_reward > maxvalue:
+                            maxvalue = temp_reward
+                            best_action = [best_action_table[0][i], best_action_table[1][j], best_action_table[2][k], best_action_table[3][l]]
+                            
+        print("best_action:", best_action)
+        print("maxvalue:", maxvalue)
+        
+        for i in range(count_vehicle):
+            env.controlled_vehicles[i].act(best_action[i])
+        env.road.step(1 / env.config["simulation_frequency"])
+        terminated = is_terminated(env)
+        truncated = is_truncated(env)
+        env.render() 
+        env.time += 1 / env.config["simulation_frequency"]
+
+                    
+
+
+
+
+
 
 
 
