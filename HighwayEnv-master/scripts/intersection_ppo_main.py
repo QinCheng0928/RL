@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
-#    tensorboard --logdir=intersection_ppo_random/
+#    tensorboard --logdir=intersection_ppo_MultiAgent/
 #            http://localhost:6006/
 # ============================================
 # ==================================
@@ -36,7 +36,7 @@ def train():
         learning_rate=5e-4,
         gamma=0.99,
         verbose=2,
-        tensorboard_log="intersection_ppo_random/",
+        tensorboard_log="intersection_ppo_MultiAgent/",
         seed=2000,
         device='cuda',  # 指定使用 GPU
         # device='cpu', # 指定使用 CPU
@@ -44,12 +44,12 @@ def train():
     # 检查使用的设备
     print("Device used:", model.policy.device)
     # Train the agent
-    model.learn(total_timesteps=int(1e3))
+    model.learn(total_timesteps=int(1e4))
     # Save the agent
-    model.save("intersection_ppo_random/model")
+    model.save("intersection_ppo_MultiAgent/model")
 
 def evaluate():
-    model = PPO.load(current_directory + "\intersection_ppo_random\model")
+    model = PPO.load(current_directory + "\intersection_ppo_MultiAgent\model")
     env = gym.make("intersection-v0", render_mode="human")
 
     for i in range(10):
@@ -62,7 +62,7 @@ def evaluate():
 
 
 if __name__ == "__main__":
-    istrain = True
+    istrain = False
     if istrain:
         print("Training...")
         train()

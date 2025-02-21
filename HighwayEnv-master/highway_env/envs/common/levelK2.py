@@ -22,34 +22,28 @@ class LevelK:
                 maxvalue = -np.inf
                 for cur_action in env.ACTIONS.values():
                     temp_env = deepcopy(env)
+                    controlled_vehicle = temp_env.controlled_vehicles[vehicle]
                     if k == 0:
                         for i in temp_env.road.vehicles:
-                            if not (temp_env.controlled_vehicles[vehicle] is i):
+                            if not (controlled_vehicle is i):
                                 i.action["acceleration"] = 0
                                 i.action["steering"] = 0
                                 i.speed = 0
-                            else:
-                                temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        for frame in range(frames):
-                            temp_env.road.act()
-                            temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                        predicted_reward = temp_env.my_reward(cur_action)
-                        if predicted_reward >= maxvalue:
-                            maxvalue = predicted_reward
-                            dp[vehicle][k] = cur_action
+                        controlled_vehicle.act(cur_action)
                     else:
                         for i in range(count_vehicle):
                             if i != vehicle:
                                 temp_env.controlled_vehicles[i].act(dp[i][k - 1])
                             else:
-                                temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        for frame in range(frames):
-                            temp_env.road.act()
-                            temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                        predicted_reward = temp_env.my_reward(cur_action)
-                        if predicted_reward >= maxvalue:
-                            maxvalue = predicted_reward
-                            dp[vehicle][k] = cur_action
+                                controlled_vehicle.act(cur_action)
+                    for _ in range(frames):
+                        temp_env.road.act()
+                        temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                        
+                    predicted_reward = temp_env.my_reward(cur_action)
+                    if predicted_reward >= maxvalue:
+                        maxvalue = predicted_reward
+                        dp[vehicle][k] = cur_action
         for i in range(count_vehicle):
             best_actions[i] = dp[i][env.controlled_vehicles[i].levelk]
         return best_actions

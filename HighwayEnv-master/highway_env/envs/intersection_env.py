@@ -37,7 +37,7 @@ class IntersectionEnv(AbstractEnv):
                     "type": "DiscreteMetaAction",
                     "longitudinal": False,
                     "lateral": False,
-                    "target_speeds": [0, 4.5, 11],
+                    "target_speeds": [0, 4.5, 9],
                 },
                 "duration": 13,  # [s]
                 "destination": "o1",
@@ -326,7 +326,8 @@ class IntersectionEnv(AbstractEnv):
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
                 ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
-                speed=ego_lane.speed_limit,
+                # speed=ego_lane.speed_limit,
+                speed=8,
                 heading=ego_lane.heading_at(60),
             )
             try:
@@ -340,6 +341,7 @@ class IntersectionEnv(AbstractEnv):
             # 将车辆加入道路环境
             self.road.vehicles.append(ego_vehicle)
             self.controlled_vehicles.append(ego_vehicle)
+            # print(f"The speed of Controlled Vehicle {ego_id} is {ego_vehicle.speed}" )
 
             # 避免早期碰撞，移除可能产生冲突的车辆
             # for v in self.road.vehicles:
@@ -352,6 +354,7 @@ class IntersectionEnv(AbstractEnv):
 
 
     # 生成一个新车辆并将其加入到路上的车辆列表中
+    # 蓝色的环境车辆
     def _spawn_vehicle(
         self,
         longitudinal: float = 0,
@@ -372,7 +375,8 @@ class IntersectionEnv(AbstractEnv):
             longitudinal=(
                 longitudinal + 5 + self.np_random.normal() * position_deviation
             ),
-            speed=8 + self.np_random.normal() * speed_deviation,
+            speed = 8 + self.np_random.normal() * speed_deviation,
+            # speed = 8,
         )
         for v in self.road.vehicles:
             if np.linalg.norm(v.position - vehicle.position) < 15:
