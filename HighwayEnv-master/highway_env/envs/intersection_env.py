@@ -37,7 +37,7 @@ class IntersectionEnv(AbstractEnv):
                     "type": "DiscreteMetaAction",
                     "longitudinal": False,
                     "lateral": False,
-                    "target_speeds": [0, 4.5, 9],
+                    "target_speeds": [0, 4.5, 11],
                 },
                 "duration": 13,  # [s]
                 "destination": "o1",
@@ -48,8 +48,8 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -500,
-                "high_speed_reward": 10,
+                "collision_reward": -5000,
+                "high_speed_reward": 100,
                 "arrived_reward": 100, 
                 "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
@@ -108,8 +108,8 @@ class IntersectionEnv(AbstractEnv):
         )
         return {
             "collision_reward": vehicle.crashed,
-            # "high_speed_reward": np.clip(scaled_speed, 0, 1),
-            "high_speed_reward": np.clip(scaled_speed, -2, 2),
+            "high_speed_reward": np.clip(scaled_speed, -1, 1),
+            # "high_speed_reward": np.clip(scaled_speed, -2, 2),
             "arrived_reward": self.has_arrived(vehicle),
             "stop_reward": vehicle.speed == 0,
             # "on_road_reward": vehicle.on_road,
@@ -325,7 +325,7 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position( 5 * local_rng.normal(1), 0), 
+                ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
                 speed=ego_lane.speed_limit,
                 heading=ego_lane.heading_at(60),
             )

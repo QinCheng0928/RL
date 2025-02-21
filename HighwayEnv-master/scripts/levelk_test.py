@@ -29,7 +29,7 @@ def get_action_table(count_vehicle, count_k, env):
     frames = int(
             env.config["simulation_frequency"] // env.config["policy_frequency"]
         )
-    frames = 20
+    frames = 30
     # 保存动作的列表，先索引vehicle，在索引k
     dp = [["" for _ in range(count_k)] for _ in range(count_vehicle)]
 
@@ -50,7 +50,7 @@ def get_action_table(count_vehicle, count_k, env):
                         temp_env.road.act()
                         temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                     predicted_reward = temp_env.my_reward(cur_action)
-                    if predicted_reward > maxvalue:
+                    if predicted_reward >= maxvalue:
                         maxvalue = predicted_reward
                         dp[vehicle][k] = cur_action
                 else:
@@ -63,7 +63,7 @@ def get_action_table(count_vehicle, count_k, env):
                         temp_env.road.act()
                         temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                     predicted_reward = temp_env.my_reward(cur_action)
-                    if predicted_reward > maxvalue:
+                    if predicted_reward >= maxvalue:
                         maxvalue = predicted_reward
                         dp[vehicle][k] = cur_action
     return dp
@@ -101,6 +101,8 @@ if __name__ == '__main__':
         for i in range(count_vehicle):
             env.controlled_vehicles[i].act(best_action[i])
         env.road.step(1 / env.config["simulation_frequency"])
+        for i in range(count_vehicle):
+            print("vehicle", i, ":", env.controlled_vehicles[i].speed)
         terminated = is_terminated(env)
         truncated = is_truncated(env)
         env.render() 
