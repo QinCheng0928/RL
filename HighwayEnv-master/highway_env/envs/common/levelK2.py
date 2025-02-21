@@ -11,6 +11,7 @@ class LevelK:
     def get_acceleration(self, env):
         count_k = 4                                     # 保存k的取值范围,表示 0 - 3
         count_vehicle = len(env.controlled_vehicles)    # 保存受控车的数量
+        frames = 30                                      # 保存每次迭代的帧数
 
         best_actions = [0] * count_vehicle                                  # 保存动作列表，按照受控车的顺序
         dp = [["" for _ in range(count_k)] for _ in range(count_vehicle)]   # 保存迭代过程中的数据
@@ -24,29 +25,31 @@ class LevelK:
                     if k == 0:
                         for i in temp_env.road.vehicles:
                             if not (temp_env.controlled_vehicles[vehicle] is i):
-                                i.action["acceleration"]=0
-                                i.action["steering"]=0
-                                i.speed=0
+                                i.action["acceleration"] = 0
+                                i.action["steering"] = 0
+                                i.speed = 0
                             else:
                                 temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                        predicted_reward = temp_env._reward(cur_action)
-                        if predicted_reward > maxvalue:
+                        for frame in range(frames):
+                            temp_env.road.act()
+                            temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                        predicted_reward = temp_env.my_reward(cur_action)
+                        if predicted_reward >= maxvalue:
                             maxvalue = predicted_reward
                             dp[vehicle][k] = cur_action
                     else:
                         for i in range(count_vehicle):
                             if i != vehicle:
-                                temp_env.controlled_vehicles[i].act(dp[i][k-1])
+                                temp_env.controlled_vehicles[i].act(dp[i][k - 1])
                             else:
                                 temp_env.controlled_vehicles[vehicle].act(cur_action)
-                        temp_env.road.step(1 / temp_env.config["simulation_frequency"])
-                        predicted_reward = temp_env._reward(cur_action)
-                        if predicted_reward > maxvalue:
+                        for frame in range(frames):
+                            temp_env.road.act()
+                            temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                        predicted_reward = temp_env.my_reward(cur_action)
+                        if predicted_reward >= maxvalue:
                             maxvalue = predicted_reward
                             dp[vehicle][k] = cur_action
-                # print("Maxvalue is :",maxvalue)
-        # print("The resulting action list is",dp)
         for i in range(count_vehicle):
             best_actions[i] = dp[i][env.controlled_vehicles[i].levelk]
         return best_actions
