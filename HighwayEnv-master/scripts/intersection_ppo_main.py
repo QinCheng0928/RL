@@ -44,7 +44,7 @@ def train():
     # 检查使用的设备
     print("Device used:", model.policy.device)
     # Train the agent
-    model.learn(total_timesteps=int(1e4))
+    model.learn(total_timesteps=int(1e5))
     # Save the agent
     model.save("intersection_ppo_MultiAgent/model")
 
@@ -62,7 +62,7 @@ def evaluate():
 
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()
