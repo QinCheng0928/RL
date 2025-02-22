@@ -73,7 +73,7 @@ if __name__ == '__main__':
     obs, info = env.reset()
     terminated = False
     truncated = False
-    while not (terminated or truncated):
+    while not (terminated or truncated):        
         best_action_table = get_action_table(count_vehicle, count_k, env)
         # print("best_action_table:", best_action_table)
         
@@ -94,6 +94,14 @@ if __name__ == '__main__':
         
         for i in range(count_vehicle):
             env.controlled_vehicles[i].act(best_action[i])
+            
+        # 控制到达目的地的车辆使其静止
+        for i in range(count_vehicle):
+            if env.has_arrived(env.controlled_vehicles[i]):
+                env.controlled_vehicles[i].action["acceleration"] = 0
+                env.controlled_vehicles[i].action["steering"] = 0
+                env.controlled_vehicles[i].speed = 0
+                
         env.road.step(1 / env.config["simulation_frequency"])
         for i in range(count_vehicle):
             print("vehicle", i, ":", env.controlled_vehicles[i].speed)
@@ -101,6 +109,7 @@ if __name__ == '__main__':
         truncated = is_truncated(env)
         env.render() 
         env.time += 1 / env.config["simulation_frequency"]
+        
 
                     
 

@@ -48,9 +48,9 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -5000,
+                "collision_reward": -500,
                 "high_speed_reward": 100,
-                "arrived_reward": 100, 
+                "arrived_reward": 200, 
                 "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
