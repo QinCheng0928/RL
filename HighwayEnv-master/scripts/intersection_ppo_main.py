@@ -14,30 +14,36 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
-#    tensorboard --logdir=intersection_ppo_MultiAgent/
+#    tensorboard --logdir=log/intersection_ppo_MultiAgent/
 #            http://localhost:6006/
 # ============================================
 # ==================================
 #        Main script
 # ==================================
 
+def linear_schedule(initial_value):
+    def func(progress_remaining):
+        return progress_remaining * initial_value
+    return func
+
 def train():
     n_cpu = 6
-    batch_size = 8
+    batch_size = 128
     env = make_vec_env("intersection-v0", n_envs=n_cpu, vec_env_cls=SubprocVecEnv)
     # env = gym.make('intersection-v0')
     model = PPO(
         "MlpPolicy",
         env,
-        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
+        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),
         n_steps= batch_size * 12 // n_cpu,
         batch_size=batch_size,
         n_epochs=10,
         learning_rate=5e-4,
         gamma=0.99,
         verbose=2,
-        tensorboard_log="intersection_ppo_MultiAgent/",
-        seed=2000,
+        clip_range=linear_schedule(0.2),
+        tensorboard_log="log/intersection_ppo_MultiAgent/",
+        # seed=2000,
         device='cuda',  # 指定使用 GPU
         # device='cpu', # 指定使用 CPU
     )

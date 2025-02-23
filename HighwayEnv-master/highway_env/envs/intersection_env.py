@@ -32,6 +32,7 @@ class IntersectionEnv(AbstractEnv):
                     "absolute": True,
                     "flatten": False,
                     "observe_intentions": True,
+                    "normalize": False,
                 },
                 "action": {
                     "type": "DiscreteMetaAction",
@@ -48,10 +49,10 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -500,
-                "high_speed_reward": 100,
-                "arrived_reward": 200, 
-                "stop_reward": -50,
+                "collision_reward": -10,
+                "high_speed_reward": 0.3,
+                "arrived_reward": 5, 
+                "stop_reward": -2,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
                 "offroad_terminal": False,
@@ -325,7 +326,7 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
+                ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
                 # speed=ego_lane.speed_limit,
                 speed=8,
                 heading=ego_lane.heading_at(60),
