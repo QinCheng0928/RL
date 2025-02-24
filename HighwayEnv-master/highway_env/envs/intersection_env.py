@@ -38,7 +38,7 @@ class IntersectionEnv(AbstractEnv):
                     "type": "DiscreteMetaAction",
                     "longitudinal": False,
                     "lateral": False,
-                    "target_speeds": [0, 4.5, 9],
+                    "target_speeds": [0, 3, 6, 9],
                 },
                 "duration": 13,  # [s]
                 "destination": "o1",
