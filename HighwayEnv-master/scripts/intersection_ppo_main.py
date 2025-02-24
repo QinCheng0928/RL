@@ -9,7 +9,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 import highway_env
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore")
 
 current_directory = os.getcwd()
 print(current_directory)
@@ -34,7 +34,7 @@ def train():
     model = PPO(
         "MlpPolicy",
         env,
-        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),
+        policy_kwargs=dict(net_arch=dict(pi=[128, 128], vf=[128, 128])),
         n_steps= batch_size * 12 // n_cpu,
         batch_size=batch_size,
         n_epochs=10,
@@ -44,18 +44,18 @@ def train():
         clip_range=linear_schedule(0.2),
         tensorboard_log="log/intersection_ppo_MultiAgent/",
         # seed=2000,
-        device='cuda',  # 指定使用 GPU
-        # device='cpu', # 指定使用 CPU
+        # device='cuda',  # 指定使用 GPU
+        device='cpu', # 指定使用 CPU
     )
     # 检查使用的设备
     print("Device used:", model.policy.device)
     # Train the agent
     model.learn(total_timesteps=int(1e5))
     # Save the agent
-    model.save("intersection_ppo_MultiAgent/model")
+    model.save("log/intersection_ppo_MultiAgent/model")
 
 def evaluate():
-    model = PPO.load(current_directory + "\intersection_ppo_MultiAgent\model")
+    model = PPO.load(current_directory + "/log/intersection_ppo_MultiAgent/model")
     env = gym.make("intersection-v0", render_mode="human")
 
     for i in range(10):
@@ -64,11 +64,16 @@ def evaluate():
         while not (done or truncated):
             action, _ = model.predict(obs)
             obs, reward, done, truncated, info = env.step(action)
+            for i in range(len(env.controlled_vehicles)):
+                if env.has_arrived(env.controlled_vehicles[i]):
+                    env.controlled_vehicles[i].action["acceleration"] = 0
+                    env.controlled_vehicles[i].action["steering"] = 0
+                    env.controlled_vehicles[i].speed = 0
             env.render()
-
+            
 
 if __name__ == "__main__":
-    istrain = True
+    istrain = False
     if istrain:
         print("Training...")
         train()
