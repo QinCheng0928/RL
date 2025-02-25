@@ -66,7 +66,7 @@ class IntersectionEnv(AbstractEnv):
             self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles
         ) / len(self.controlled_vehicles)
         
-    def my_reward(self, action: int) -> float:
+    def my_reward(self, action = 0) -> float:
         """Aggregated reward, for cooperative agents."""
         return sum(
             self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles
@@ -326,7 +326,8 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
+                # ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
+                ego_lane.position(20 , 0), 
                 # speed=ego_lane.speed_limit,
                 speed=8,
                 heading=ego_lane.heading_at(60),
