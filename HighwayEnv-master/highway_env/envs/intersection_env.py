@@ -49,7 +49,7 @@ class IntersectionEnv(AbstractEnv):
                 "screen_height": 600,
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
-                "collision_reward": -10,
+                "collision_reward": -30,
                 "high_speed_reward": 0.3,
                 "arrived_reward": 5, 
                 "stop_reward": -2,
@@ -110,7 +110,6 @@ class IntersectionEnv(AbstractEnv):
         return {
             "collision_reward": vehicle.crashed,
             "high_speed_reward": np.clip(scaled_speed, -1, 1),
-            # "high_speed_reward": np.clip(scaled_speed, -2, 2),
             "arrived_reward": self.has_arrived(vehicle),
             "stop_reward": vehicle.speed == 0,
             # "on_road_reward": vehicle.on_road,
@@ -326,8 +325,7 @@ class IntersectionEnv(AbstractEnv):
             # 创建受控车辆（智能体）
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                # ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
-                ego_lane.position(10 , 0), 
+                ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
                 # speed=ego_lane.speed_limit,
                 speed=8,
                 heading=ego_lane.heading_at(60),
