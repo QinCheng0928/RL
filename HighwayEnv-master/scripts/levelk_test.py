@@ -14,6 +14,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+frames = 15
+
 def is_truncated(env) -> bool:
     # return env.time >= env.config["duration"]
     return env.time >= 1000
@@ -29,7 +31,7 @@ def get_action_table(count_vehicle, count_k, env):
     frames = int(
             env.config["simulation_frequency"] // env.config["policy_frequency"]
         )
-    frames = 30
+
     # 保存动作的列表，先索引vehicle，在索引k
     dp = [["" for _ in range(count_k)] for _ in range(count_vehicle)]
 
@@ -56,7 +58,7 @@ def get_action_table(count_vehicle, count_k, env):
                     temp_env.road.act()
                     temp_env.road.step(1 / temp_env.config["simulation_frequency"])
                         
-                predicted_reward = temp_env.my_reward(cur_action)
+                predicted_reward = temp_env.my_reward()
                 if predicted_reward >= maxvalue:
                     maxvalue = predicted_reward
                     dp[vehicle][k] = cur_action
@@ -75,21 +77,32 @@ if __name__ == '__main__':
     truncated = False
     while not (terminated or truncated):        
         best_action_table = get_action_table(count_vehicle, count_k, env)
-        # print("best_action_table:", best_action_table)
+        for i in best_action_table:
+            print(i)
         
         maxvalue = -np.inf
         best_action = [0] * count_vehicle
+        best_k = [0] * count_vehicle
         for i in range(count_k):
             for j in range(count_k):
                 for k in range(count_k):
                     for l in range(count_k):
                         temp_env = deepcopy(env)
-                        temp_reward = temp_env.my_reward([best_action_table[0][i], best_action_table[1][j], best_action_table[2][k], best_action_table[3][l]])
+                        temp_env.controlled_vehicles[0].act(best_action_table[0][i])
+                        temp_env.controlled_vehicles[1].act(best_action_table[1][j])
+                        temp_env.controlled_vehicles[2].act(best_action_table[2][k])
+                        temp_env.controlled_vehicles[3].act(best_action_table[3][l])
+                        for _ in range(frames):
+                            temp_env.road.act()
+                            temp_env.road.step(1 / temp_env.config["simulation_frequency"])
+                        temp_reward = temp_env.my_reward()
                         if temp_reward > maxvalue:
                             maxvalue = temp_reward
                             best_action = [best_action_table[0][i], best_action_table[1][j], best_action_table[2][k], best_action_table[3][l]]
+                            best_k = [i, j, k, l]
                             
         print("best_action:", best_action)
+        print("best_k:", best_k)
         print("maxvalue:", maxvalue)
         
         for i in range(count_vehicle):
@@ -101,10 +114,14 @@ if __name__ == '__main__':
                 env.controlled_vehicles[i].action["acceleration"] = 0
                 env.controlled_vehicles[i].action["steering"] = 0
                 env.controlled_vehicles[i].speed = 0
-                
-        env.road.step(1 / env.config["simulation_frequency"])
+        
+        for _ in range(5):
+            env.road.act()
+            env.road.step(1 / env.config["simulation_frequency"])
         for i in range(count_vehicle):
-            print("vehicle", i, ":", env.controlled_vehicles[i].speed)
+            print("vehicle", i, " speed:", env.controlled_vehicles[i].speed)
+            print("vehicle", i, "target speed:", env.controlled_vehicles[i].target_speed)
+        print("\n")
         terminated = is_terminated(env)
         truncated = is_truncated(env)
         env.render() 
