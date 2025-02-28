@@ -12,11 +12,13 @@ if project_root not in sys.path:
 import highway_env
 import warnings
 warnings.filterwarnings("ignore")
+import itertools
+import functools
 
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
-#    tensorboard --logdir=log/intersection_ppo_MultiAgent/
+#       MultiAgent/
 #            http://localhost:6006/
 # ============================================
 # ==================================
@@ -44,7 +46,7 @@ def train():
         gamma=0.99,
         verbose=2,
         clip_range=linear_schedule(0.2),
-        tensorboard_log="log/intersection_ppo_MultiAgent1/",
+        tensorboard_log="log/intersection_ppo_fix_position/",
         # seed=2000,
         # device='cuda',  # 指定使用 GPU
         device='cpu', # 指定使用 CPU
@@ -54,7 +56,7 @@ def train():
     # Train the agent
     model.learn(total_timesteps=int(1e5))
     # Save the agent
-    model.save("log/intersection_ppo_MultiAgent1/model")
+    model.save("log/intersection_ppo_fix_position/model")
 
 
 def get_action_table(count_vehicle, count_k, env):
@@ -107,10 +109,11 @@ def is_terminated(env) -> bool:
     
 
 def evaluate():
-    model = PPO.load(current_directory + "/log/intersection_ppo_MultiAgent/model")
+    model = PPO.load(current_directory + "/log/intersection_ppo_fix_position/model")
     env = gym.make("intersection-v0", render_mode="human")
+    ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
 
-    for i in range(10):
+    for i in range(1):
         obs, info = env.reset()
         done = truncated = False
         while not (done or truncated):
@@ -119,14 +122,14 @@ def evaluate():
             env.time += 1 / env.config["policy_frequency"]
             
             dp = get_action_table(len(env.controlled_vehicles), 4, env)
+            k_action = ACTIONS_K[int(action)]
             for i in range(len(env.controlled_vehicles)):
-                env.controlled_vehicles[i].act(dp[i][env.controlled_vehicles[i].levelk])
-            # 控制到达目的地的车辆使其静止
-            for i in range(len(env.controlled_vehicles)):
-                if env.has_arrived(env.controlled_vehicles[i]):
-                    env.controlled_vehicles[i].action["acceleration"] = 0
-                    env.controlled_vehicles[i].action["steering"] = 0
-                    env.controlled_vehicles[i].speed = 0
+                env.controlled_vehicles[i].act(dp[i][k_action[i]])
+            for vehicle in env.controlled_vehicles:
+                if env.has_arrived(vehicle):
+                    vehicle.speed = 0
+                    vehicle.action["acceleration"] = 0
+                    vehicle.action["steering"] = 0
                     
             env.road.step(1 / env.config["simulation_frequency"])
             for i in range(len(env.controlled_vehicles)):

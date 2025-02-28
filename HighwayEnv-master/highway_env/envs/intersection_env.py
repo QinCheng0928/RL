@@ -24,10 +24,10 @@ class IntersectionEnv(AbstractEnv):
                     "vehicles_count": 100,
                     "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
                     "features_range": {
-                        "x": [-1000, 1000],
-                        "y": [-1000, 1000],
-                        "vx": [-200, 200],
-                        "vy": [-200, 200],
+                        "x": [-100, 100],
+                        "y": [-100, 100],
+                        "vx": [-20, 20],
+                        "vy": [-20, 20],
                     },
                     "absolute": True,
                     "flatten": False,
@@ -38,9 +38,9 @@ class IntersectionEnv(AbstractEnv):
                     "type": "DiscreteMetaAction",
                     "longitudinal": False,
                     "lateral": False,
-                    "target_speeds": [0, 3, 6, 9],
+                    "target_speeds": [0, 4.5, 11],
                 },
-                "duration": 13,  # [s]
+                "duration": 30,  # [s]
                 "destination": "o1",
                 "controlled_vehicles": 4,
                 "initial_vehicle_count": 0,
@@ -50,9 +50,13 @@ class IntersectionEnv(AbstractEnv):
                 "centering_position": [0.5, 0.6],
                 "scaling": 5.5 * 1.3,
                 "collision_reward": -30,
-                "high_speed_reward": 0.3,
+                "high_speed_reward": 3,
                 "arrived_reward": 5, 
                 "stop_reward": -2,
+                # "collision_reward": -5000,
+                # "high_speed_reward": 100,
+                # "arrived_reward": 100, 
+                # "stop_reward": -50,
                 "reward_speed_range": [0.0, 9.0],# default = [7.0, 9.0]
                 "normalize_reward": False,
                 "offroad_terminal": False,
@@ -117,6 +121,11 @@ class IntersectionEnv(AbstractEnv):
 
     # 判断当前情景是否结束
     def _is_terminated(self) -> bool:
+        for vehicle in self.controlled_vehicles:
+            if self.has_arrived(vehicle):
+                vehicle.speed = 0
+                vehicle.action["acceleration"] = 0
+                vehicle.action["steering"] = 0
         return (
             any(vehicle.crashed for vehicle in self.controlled_vehicles)
             or all(self.has_arrived(vehicle) for vehicle in self.controlled_vehicles)
@@ -323,11 +332,13 @@ class IntersectionEnv(AbstractEnv):
             # destination = f"o{ego_id}"
 
             # 创建受控车辆（智能体）
+            # tag = ego_id % 2
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position( 5 + 3 * local_rng.normal(1), 0), 
-                # speed=ego_lane.speed_limit,
-                speed=8,
+                ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
+                # ego_lane.position( 10 + ego_id * 2, 0), 
+                speed=ego_lane.speed_limit,
+                # speed=8,
                 heading=ego_lane.heading_at(60),
             )
             try:

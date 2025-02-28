@@ -283,8 +283,14 @@ class AbstractEnv(gym.Env):
             ):
                 # 动作的action需要模型输出的数
                 self.action_type.act(action)
-
+            
             self.road.act()
+            # 控制到终点的车辆速度为0
+            for vehicle in self.controlled_vehicles:
+                if self.has_arrived(vehicle):
+                    vehicle.speed = 0
+                    vehicle.action["acceleration"] = 0
+                    vehicle.action["steering"] = 0
             self.road.step(1 / self.config["simulation_frequency"])
             self.steps += 1
 
