@@ -18,8 +18,7 @@ import functools
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
-#       MultiAgent/
-#            http://localhost:6006/
+#   tensorboard --logdir=log/intersection_ppo_MultiAgent/
 # ============================================
 # ==================================
 #        Main script
