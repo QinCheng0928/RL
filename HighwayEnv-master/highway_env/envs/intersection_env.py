@@ -316,6 +316,7 @@ class IntersectionEnv(AbstractEnv):
         local_rng = np.random.default_rng(rng)
         # print(f"Fixed Local Seed: {local_rng}")
         
+        
         for ego_id in range(self.config["controlled_vehicles"]):
             # origin_index = local_rng.integers(0, 4)
             # destination_index = origin_index
@@ -327,16 +328,18 @@ class IntersectionEnv(AbstractEnv):
             # destination = f"o{destination_index}"
 
             # 全部左转
+            own_destination = {0:2,1:2,2:3,3:1}
             ego_lane = self.road.network.get_lane((f"o{ego_id}", f"ir{ego_id}", 0))
             destination = f"o{(ego_id + 1) % 4}"
             # destination = f"o{ego_id}"
+            # destination = f"o{own_destination[ego_id]}"
 
             # 创建受控车辆（智能体）
-            # tag = ego_id % 2
+            tag = ego_id % 2
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
-                ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
-                # ego_lane.position( 10 + ego_id * 2, 0), 
+                # ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
+                ego_lane.position( 10 + tag * 3, 0), 
                 speed=ego_lane.speed_limit,
                 # speed=8,
                 heading=ego_lane.heading_at(60),

@@ -18,12 +18,11 @@ import functools
 current_directory = os.getcwd()
 print(current_directory)
 # ============================================
-#   tensorboard --logdir=log/intersection_ppo_MultiAgent/
+#   tensorboard --logdir=log/intersection_ppo_position_stop/
 # ============================================
 # ==================================
 #        Main script
 # ==================================
-
 def linear_schedule(initial_value):
     def func(progress_remaining):
         return progress_remaining * initial_value
@@ -45,7 +44,7 @@ def train():
         gamma=0.99,
         verbose=2,
         clip_range=linear_schedule(0.2),
-        tensorboard_log="log/intersection_ppo_fix_position/",
+        tensorboard_log="log/intersection_ppo_fix_position_stop/",
         # seed=2000,
         # device='cuda',  # 指定使用 GPU
         device='cpu', # 指定使用 CPU
@@ -55,7 +54,7 @@ def train():
     # Train the agent
     model.learn(total_timesteps=int(1e5))
     # Save the agent
-    model.save("log/intersection_ppo_fix_position/model")
+    model.save("log/intersection_ppo_fix_position_stop/model")
 
 
 def get_action_table(count_vehicle, count_k, env):
@@ -108,7 +107,7 @@ def is_terminated(env) -> bool:
     
 
 def evaluate():
-    model = PPO.load(current_directory + "/log/intersection_ppo_fix_position/model")
+    model = PPO.load(current_directory + "/log/intersection_ppo_fixed/model")
     env = gym.make("intersection-v0", render_mode="human")
     ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
 
@@ -148,7 +147,7 @@ def evaluate():
             
 
 if __name__ == "__main__":
-    istrain = False
+    istrain = True
     if istrain:
         print("Training...")
         train()
