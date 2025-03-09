@@ -339,7 +339,8 @@ class IntersectionEnv(AbstractEnv):
             ego_vehicle = self.action_type.vehicle_class(
                 self.road,
                 # ego_lane.position( 10 + 3 * local_rng.normal(1), 0), 
-                ego_lane.position( 10 + tag * 3, 0), 
+                # ego_lane.position( 10 + tag * 3, 0), 
+                ego_lane.position( 10 + ego_id * 2, 0), 
                 speed=ego_lane.speed_limit,
                 # speed=8,
                 heading=ego_lane.heading_at(60),

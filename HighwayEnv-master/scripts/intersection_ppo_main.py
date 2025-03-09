@@ -107,13 +107,17 @@ def is_terminated(env) -> bool:
     
 
 def evaluate():
-    model = PPO.load(current_directory + "/log/intersection_ppo_fixed/model")
+    model = PPO.load(current_directory + "/log/intersection_ppo_fix_position_stop/model")
     env = gym.make("intersection-v0", render_mode="human")
     ACTIONS_K = {i: list(comb) for i, comb in enumerate(itertools.product(list(range(4)), repeat=4))}
 
     for i in range(1):
         obs, info = env.reset()
         done = truncated = False
+        
+        mean_speed = [{"speed":0,"step":0},{"speed":0,"step":0},{"speed":0,"step":0},{"speed":0,"step":0}]
+        print("mean_speed:", mean_speed)
+        
         while not (done or truncated):
             action, _ = model.predict(obs)
             # obs, reward, done, truncated, info = env.step(action)
@@ -123,31 +127,32 @@ def evaluate():
             k_action = ACTIONS_K[int(action)]
             for i in range(len(env.controlled_vehicles)):
                 env.controlled_vehicles[i].act(dp[i][k_action[i]])
-            for vehicle in env.controlled_vehicles:
-                if env.has_arrived(vehicle):
-                    vehicle.speed = 0
-                    vehicle.action["acceleration"] = 0
-                    vehicle.action["steering"] = 0
+            for i in range(len(env.controlled_vehicles)):
+                if env.has_arrived(env.controlled_vehicles[i]):
+                    env.controlled_vehicles[i].speed = 0
+                    env.controlled_vehicles[i].action["acceleration"] = 0
+                    env.controlled_vehicles[i].action["steering"] = 0
+                else:
+                    mean_speed[i]["speed"]+= env.controlled_vehicles[i].speed
+                    mean_speed[i]["step"]+= 1
                     
             env.road.step(1 / env.config["simulation_frequency"])
             for i in range(len(env.controlled_vehicles)):
                 print("vehicle", i, ":", env.controlled_vehicles[i].speed)
+            print("mean_speed" ,mean_speed)
             
             obs = env.observation_type.observe()
             done = is_terminated(env)
             truncated = is_truncated(env)
-            if env.render_mode == "human":
-                env.render()
-            # for i in range(len(env.controlled_vehicles)):
-            #     if env.has_arrived(env.controlled_vehicles[i]):
-            #         env.controlled_vehicles[i].action["acceleration"] = 0
-            #         env.controlled_vehicles[i].action["steering"] = 0
-            #         env.controlled_vehicles[i].speed = 0
             env.render()
+        
+        for i in range(len(env.controlled_vehicles)):
+            mean_speed[i]["speed"] /= mean_speed[i]["step"]
+        print("mean_speed:", mean_speed)
             
 
 if __name__ == "__main__":
-    istrain = True
+    istrain = False
     if istrain:
         print("Training...")
         train()

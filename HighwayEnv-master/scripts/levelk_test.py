@@ -77,10 +77,11 @@ if __name__ == '__main__':
     obs, info = env.reset()
     terminated = False
     truncated = False
+    mean_speed = [{"speed":0,"step":0},{"speed":0,"step":0},{"speed":0,"step":0},{"speed":0,"step":0}]
     while not (terminated or truncated):        
         best_action_table = get_action_table(count_vehicle, count_k, env)
-        for i in best_action_table:
-            print(i)
+        # for i in best_action_table:
+        #     print(i)
         
         maxvalue = -np.inf
         best_action = [0] * count_vehicle
@@ -97,9 +98,9 @@ if __name__ == '__main__':
                                            , best_action_table[2][k]["action"], best_action_table[3][l]["action"]]
                             best_k = [i, j, k, l]
                             
-        print("best_action:", best_action)
-        print("best_k:", best_k)
-        print("maxvalue:", maxvalue)
+        # print("best_action:", best_action)
+        # print("best_k:", best_k)
+        # print("maxvalue:", maxvalue)
         
         for i in range(count_vehicle):
             env.controlled_vehicles[i].act(best_action[i])
@@ -110,14 +111,24 @@ if __name__ == '__main__':
                 env.controlled_vehicles[i].action["acceleration"] = 0
                 env.controlled_vehicles[i].action["steering"] = 0
                 env.controlled_vehicles[i].speed = 0
+            else:
+                mean_speed[i]["speed"] += env.controlled_vehicles[i].speed
+                mean_speed[i]["step"] += 1
         
-        env.road.step(1 / env.config["simulation_frequency"])
+        
         for i in range(count_vehicle):
             print("vehicle", i, " speed:", env.controlled_vehicles[i].speed)
+        print("mean_speed" ,mean_speed)
+        
+        env.road.step(1 / env.config["simulation_frequency"])
         terminated = is_terminated(env)
         truncated = is_truncated(env)
         env.render() 
         env.time += 1 / env.config["simulation_frequency"]
+        
+    for i in range(len(env.controlled_vehicles)):
+        mean_speed[i]["speed"] /= mean_speed[i]["step"]
+    print("mean_speed:", mean_speed)
         
 
                     
